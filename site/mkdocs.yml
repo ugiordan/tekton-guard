@@ -1,0 +1,84 @@
+site_name: tekton-guard
+site_url: https://ugiordan.github.io/tekton-guard
+repo_url: https://github.com/ugiordan/tekton-guard
+repo_name: ugiordan/tekton-guard
+
+copyright: Copyright &copy; Ugo Giordano
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/shield-lock
+  font:
+    text: Red Hat Text
+    code: Red Hat Mono
+  palette:
+    - scheme: default
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
+    - navigation.instant
+    - navigation.path
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+  - Guides:
+    - CI Integration: guides/ci-integration.md
+    - Understanding Findings: guides/findings.md
+    - Configuration: guides/configuration.md
+    - False Positive Tuning: guides/false-positives.md
+    - Cross-Repo Resolution: guides/cross-repo.md
+  - Reference:
+    - CLI Commands: reference/cli.md
+    - Detection Rules: reference/rules.md
+    - Output Formats: reference/output-formats.md
+  - Architecture:
+    - Design Overview: architecture/overview.md
+  - Contributing:
+    - Development Setup: contributing/setup.md
+    - Adding Rules: contributing/rules.md
