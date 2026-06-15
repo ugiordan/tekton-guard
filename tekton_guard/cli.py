@@ -96,6 +96,11 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Write current findings as a new baseline file",
     )
+    parser.add_argument(
+        "--graph",
+        default=None,
+        help="Generate dependency graph JSON to this file path",
+    )
 
     args = parser.parse_args(argv)
 
@@ -139,6 +144,18 @@ def main(argv: list[str] | None = None) -> int:
         if remote:
             print(f"Resolved {len(remote)} remote resource(s)", file=sys.stderr)
         resources.extend(remote)
+
+    if args.graph:
+        from tekton_guard.graph import build_dependency_graph, calculate_blast_radius, detect_cycles
+        graph = build_dependency_graph(resources)
+        blast = calculate_blast_radius(graph)
+        cycles = detect_cycles(graph)
+        graph["blast_radius"] = blast
+        graph["cycles"] = cycles
+        Path(args.graph).write_text(json.dumps(graph, indent=2))
+        print(f"Graph written: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges", file=sys.stderr)
+        if cycles:
+            print(f"WARNING: {len(cycles)} cycle(s) detected!", file=sys.stderr)
 
     findings = run_checks(resources, config)
 
