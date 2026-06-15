@@ -199,6 +199,15 @@ def main(argv: list[str] | None = None) -> int:
         mode = "dry-run" if args.fix_dry_run else "applied"
         print(f"Fix {mode}: {total_fixed} fixed, {total_skipped} skipped, {total_failed} failed", file=sys.stderr)
 
+        # Re-scan to get post-fix findings for exit code
+        if not args.fix_dry_run:
+            target2 = Path(args.target)
+            if target2.is_file():
+                resources = parse_file(target2)
+            elif target2.is_dir():
+                resources = parse_directory(target2)
+            findings = run_checks(resources, config)
+
     if args.output_format == "json":
         output = format_json(findings, str(target))
     elif args.output_format == "sarif":

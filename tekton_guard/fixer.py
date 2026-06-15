@@ -92,7 +92,7 @@ class FixEngine:
         if not path.exists():
             return result
 
-        content = path.read_text(encoding="utf-8")
+        content = path.read_text(encoding="utf-8", errors="replace")
         lines = content.split("\n")
         changes: list[tuple[int, str, str]] = []  # (line_idx, old, new)
 
@@ -166,25 +166,24 @@ class FixEngine:
             return None
 
         sha = self._cached_resolve_sha(url, current)
-        if not sha:
+        if not sha or not _SHA_RE.match(sha):
             return None
 
         line_idx = finding.get("line_start", 0) - 1
         if line_idx < 0 or line_idx >= len(lines):
             return None
 
-        old_line = lines[line_idx]
-        if current not in old_line:
-            for i in range(max(0, line_idx - 3), min(len(lines), line_idx + 4)):
-                if current in lines[i]:
-                    line_idx = i
-                    old_line = lines[i]
-                    break
-            else:
-                return None
+        # Search for the line containing 'value: <current>' near the reported line
+        search_range = range(max(0, line_idx - 3), min(len(lines), line_idx + 4))
+        for i in search_range:
+            line = lines[i]
+            stripped = line.strip()
+            # Only match lines with 'value:' prefix containing the current ref
+            if stripped.startswith("value:") and current in stripped:
+                new_line = line.replace(current, sha, 1)
+                return (i, line, new_line)
 
-        new_line = old_line.replace(current, sha, 1)
-        return (line_idx, old_line, new_line)
+        return None
 
     def _fix_workspace_readonly(
         self, finding: dict, lines: list[str],
@@ -211,17 +210,27 @@ class FixEngine:
         changes.sort(key=lambda x: x[0], reverse=True)
 
         for line_idx, old_line, new_line in changes:
-            lines[line_idx] = new_line
+            if "\n" in new_line:
+                # Multi-line replacement: split and splice into the lines list
+                new_lines = new_line.split("\n")
+                lines[line_idx:line_idx + 1] = new_lines
+            else:
+                lines[line_idx] = new_line
 
         new_content = "\n".join(lines)
+        original_mode = path.stat().st_mode if path.exists() else 0o644
 
         # Atomic write
         fd, tmp_path = tempfile.mkstemp(suffix=".yaml", dir=str(path.parent))
         try:
             os.write(fd, new_content.encode("utf-8"))
             os.close(fd)
+            fd = -1  # mark as closed
+            os.chmod(tmp_path, original_mode)
             os.rename(tmp_path, str(path))
         except Exception:
-            os.close(fd)
-            os.unlink(tmp_path)
+            if fd >= 0:
+                os.close(fd)
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
             raise
