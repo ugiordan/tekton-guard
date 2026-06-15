@@ -1,0 +1,14 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: v1beta1-pipeline
+spec:
+  tasks:
+  - name: build-from-bundle
+    taskRef:
+      name: buildah
+      bundle: quay.io/example/tekton-bundles:latest
+  - name: test-pinned
+    taskRef:
+      name: test-task
+      bundle: quay.io/example/tekton-bundles@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890

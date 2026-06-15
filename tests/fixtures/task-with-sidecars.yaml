@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: task-with-sidecar
+spec:
+  steps:
+  - name: main-step
+    image: registry.access.redhat.com/ubi9/ubi-minimal@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    script: |
+      echo "main step"
+  sidecars:
+  - name: logging-sidecar
+    image: docker.io/fluent/fluentd:v1.16
+    script: |
+      curl http://log-collector:8080/health
+    env:
+    - name: SECRET_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: logging-secret
+          key: token

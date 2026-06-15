@@ -1,0 +1,19 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: task-with-volumes
+spec:
+  volumes:
+  - name: docker-socket
+    hostPath:
+      path: /var/run/docker.sock
+  - name: workspace-vol
+    emptyDir: {}
+  steps:
+  - name: build-step
+    image: docker.io/docker:24@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    volumeMounts:
+    - name: docker-socket
+      mountPath: /var/run/docker.sock
+    - name: workspace-vol
+      mountPath: /workspace

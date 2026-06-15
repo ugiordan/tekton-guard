@@ -100,3 +100,44 @@ def test_parse_multi_document():
 def test_multi_doc_line_offsets():
     resources = parse_file(FIXTURES / "multi-doc.yaml")
     assert resources[0].line_offset < resources[1].line_offset
+
+
+def test_parse_sidecars():
+    resources = parse_file(FIXTURES / "task-with-sidecars.yaml")
+    assert len(resources) == 1
+    r = resources[0]
+    assert len(r.steps) == 1
+    assert len(r.sidecars) == 1
+    sc = r.sidecars[0]
+    assert sc.name == "logging-sidecar"
+    assert "fluentd" in sc.image
+    assert "curl" in sc.script
+
+
+def test_parse_volumes():
+    resources = parse_file(FIXTURES / "task-with-volumes.yaml")
+    assert len(resources) == 1
+    r = resources[0]
+    assert len(r.volumes) >= 2
+    docker_vol = [v for v in r.volumes if v.get("name") == "docker-socket"]
+    assert len(docker_vol) == 1
+    assert "hostPath" in docker_vol[0]
+    assert r.steps[0].volume_mounts is not None
+    assert len(r.steps[0].volume_mounts) == 2
+
+
+def test_parse_v1beta1_bundle():
+    resources = parse_file(FIXTURES / "pipeline-v1beta1-bundle.yaml")
+    assert len(resources) == 1
+    r = resources[0]
+    assert len(r.pipeline_tasks) == 2
+
+    build_ref = r.pipeline_tasks[0].task_ref
+    assert build_ref.resolver is not None
+    assert build_ref.resolver.resolver_type == "bundles"
+    assert "quay.io/example/tekton-bundles:latest" in build_ref.resolver.bundle
+    assert not build_ref.resolver.is_sha_pinned()
+
+    test_ref = r.pipeline_tasks[1].task_ref
+    assert test_ref.resolver is not None
+    assert test_ref.resolver.is_sha_pinned()

@@ -58,6 +58,7 @@ class StepDef:
     security_context: dict[str, Any] = field(default_factory=dict)
     env: list[dict[str, Any]] = field(default_factory=list)
     ref: ResolverRef | None = None
+    volume_mounts: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -112,6 +113,7 @@ class TektonResource:
     steps: list[StepDef] = field(default_factory=list)
     sidecars: list[StepDef] = field(default_factory=list)
     results: list[dict[str, Any]] = field(default_factory=list)
+    volumes: list[dict[str, Any]] = field(default_factory=list)
 
     raw: dict[str, Any] = field(default_factory=dict)
 
@@ -207,6 +209,13 @@ def _extract_resolver_ref(ref_data: dict, base_line: int) -> ResolverRef | None:
 def _extract_task_ref(ref_data: dict, base_line: int) -> TaskRefDef:
     name = ref_data.get("name", "")
     resolver = _extract_resolver_ref(ref_data, base_line)
+    if not resolver and "bundle" in ref_data:
+        bundle_val = str(ref_data["bundle"])
+        resolver = ResolverRef(
+            resolver_type="bundles",
+            params={"bundle": bundle_val},
+            line=_get_line(ref_data, base_line),
+        )
     return TaskRefDef(name=str(name) if name else "", resolver=resolver, line=_get_line(ref_data, base_line))
 
 
@@ -230,6 +239,7 @@ def _extract_steps(steps_data: list) -> list[StepDef]:
             security_context=_to_plain(s.get("securityContext", {})) or {},
             env=_to_plain(s.get("env", [])) or [],
             ref=step_ref,
+            volume_mounts=_to_plain(s.get("volumeMounts", [])) or [],
         )
         result.append(step)
     return result
@@ -264,14 +274,17 @@ def _extract_pipeline_tasks(tasks_data: list, base_line: int) -> list[PipelineTa
         if "taskRef" in t:
             task_ref = _extract_task_ref(t["taskRef"], _get_line(t, base_line))
         inline_steps = []
+        inline_sidecars = []
         if "taskSpec" in t and isinstance(t["taskSpec"], dict):
             inline_steps = _extract_steps(t["taskSpec"].get("steps", []))
+            inline_sidecars = _extract_steps(t["taskSpec"].get("sidecars", []))
         pt = PipelineTaskDef(
             name=str(t.get("name", "")),
             task_ref=task_ref,
             workspaces=_extract_workspace_bindings(t.get("workspaces", []), _get_line(t, base_line)),
             params=_to_plain(t.get("params", [])) or [],
             steps=inline_steps,
+            sidecars=inline_sidecars,
             line=_get_line(t, base_line),
         )
         result.append(pt)
@@ -329,6 +342,8 @@ def _parse_document(doc: dict, file_path: str, doc_line: int) -> TektonResource 
     if kind in ("Task", "StepAction"):
         resource.steps = _extract_steps(spec.get("steps", []))
         resource.results = _to_plain(spec.get("results", [])) or []
+        resource.sidecars = _extract_steps(spec.get("sidecars", []))
+        resource.volumes = _to_plain(spec.get("volumes", [])) or []
 
     return resource
 
