@@ -7,16 +7,11 @@ from tekton_guard.parser import TektonResource
 from tekton_guard.checks._common import _finding, collect_all_containers, register_check
 
 
-@register_check
+# Not registered: resource requests/limits not parsed into StepDef yet.
+# Will be registered when parser adds resources field to StepDef.
 def check_limit_001(resource: TektonResource, config: ScannerConfig) -> list[dict]:
     """TKN-LIMIT-001: Missing resource requests/limits."""
-    findings = []
-    for ci in collect_all_containers(resource):
-        # Resources are not currently parsed into StepDef, check raw
-        # This is a basic check: steps without any resource constraints
-        # For now, we skip this since resources aren't in StepDef yet
-        pass
-    return findings
+    return []
 
 
 @register_check

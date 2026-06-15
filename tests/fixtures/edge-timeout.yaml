@@ -1,0 +1,19 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: excessive-timeout
+  labels:
+    pipelines.appstudio.openshift.io/type: test
+spec:
+  timeouts:
+    pipeline: 6h0m0s
+    tasks: 3h
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  taskRunTemplate:
+    serviceAccountName: test-sa

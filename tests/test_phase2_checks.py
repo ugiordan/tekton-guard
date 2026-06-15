@@ -112,3 +112,29 @@ class TestTimeout:
         findings = _run("pipelinerun-mutable.yaml")
         limit = [f for f in findings if f["rule_id"].startswith("TKN-LIMIT")]
         assert len(limit) == 0
+
+    def test_excessive_pipeline_timeout_flagged(self):
+        findings = _run("edge-timeout.yaml")
+        limit002 = [f for f in findings if f["rule_id"] == "TKN-LIMIT-002"]
+        pipeline_timeout = [f for f in limit002 if "pipeline timeout" in f["title"].lower()
+                           or "pipeline" in f.get("timeout_value", "")]
+        assert len(pipeline_timeout) >= 1
+
+    def test_excessive_task_timeout_flagged(self):
+        findings = _run("edge-timeout.yaml")
+        limit002 = [f for f in findings if f["rule_id"] == "TKN-LIMIT-002"]
+        # Dedup in run_checks uses (rule_id, file, line_start), so both timeouts
+        # from the same resource share a dedup key. The check itself produces two
+        # findings, but only one survives dedup. Verify at least one fires.
+        assert len(limit002) >= 1
+        # Verify the raw check produces both findings (bypassing dedup)
+        from tekton_guard.checks.limits import check_limit_002
+        from tekton_guard.config import ScannerConfig
+        from tekton_guard.parser import parse_file
+        resources = parse_file(FIXTURES / "edge-timeout.yaml")
+        config = ScannerConfig()
+        raw_findings = []
+        for r in resources:
+            raw_findings.extend(check_limit_002(r, config))
+        raw_limit002 = [f for f in raw_findings if f["rule_id"] == "TKN-LIMIT-002"]
+        assert len(raw_limit002) == 2  # both pipeline and task timeout before dedup
