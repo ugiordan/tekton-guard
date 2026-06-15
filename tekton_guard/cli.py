@@ -57,6 +57,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Always exit 0 regardless of findings (for informational runs)",
     )
     parser.add_argument(
+        "--fix",
+        action="store_true",
+        default=False,
+        help="Apply safe fixes (SHA pinning, readOnly). Requires GITHUB_TOKEN for git ref resolution.",
+    )
+    parser.add_argument(
+        "--fix-dry-run",
+        action="store_true",
+        default=False,
+        help="Preview fixes without applying them.",
+    )
+    parser.add_argument(
         "--resolve",
         action="store_true",
         default=False,
@@ -92,6 +104,23 @@ def main(argv: list[str] | None = None) -> int:
         resources.extend(remote)
 
     findings = run_checks(resources, config)
+
+    if args.fix or args.fix_dry_run:
+        from tekton_guard.fixer import FixEngine
+        engine = FixEngine(dry_run=args.fix_dry_run)
+        # Group findings by file
+        by_file: dict[str, list[dict]] = {}
+        for f in findings:
+            by_file.setdefault(f["file"], []).append(f)
+        all_results = []
+        for file_path, file_findings in by_file.items():
+            result = engine.fix_findings(file_findings, file_path)
+            all_results.append(result)
+        total_fixed = sum(r.total_fixed for r in all_results)
+        total_skipped = sum(len(r.skipped) for r in all_results)
+        total_failed = sum(len(r.failed) for r in all_results)
+        mode = "dry-run" if args.fix_dry_run else "applied"
+        print(f"Fix {mode}: {total_fixed} fixed, {total_skipped} skipped, {total_failed} failed", file=sys.stderr)
 
     if args.output_format == "json":
         output = format_json(findings, str(target))
