@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    chains.tekton.dev/transparency-upload: "true"
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+  name: test-pipeline-pinned
+  namespace: test-tenant
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/odh-konflux-central.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    - name: pathInRepo
+      value: pipeline/build.yaml
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-sa
+  workspaces:
+  - name: git-auth
+    secret:
+      secretName: '{{ git_auth_secret }}'
+    readOnly: true

@@ -1,0 +1,16 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  labels:
+    pipelines.appstudio.openshift.io/type: test
+  name: test-default-sa
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  taskRunTemplate:
+    serviceAccountName: default

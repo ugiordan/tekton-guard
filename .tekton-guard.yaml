@@ -1,0 +1,22 @@
+# Tekton Pipeline Security Scanner Configuration
+# Trust lists for RHOAI/Konflux pipelines
+
+trusted_git_sources:
+  - "https://github.com/opendatahub-io/"
+  - "https://github.com/red-hat-data-services/"
+  - "https://github.com/konflux-ci/"
+  - "https://github.com/redhat-appstudio/"
+
+trusted_registries:
+  - "quay.io/konflux-ci/"
+  - "quay.io/redhat-appstudio/"
+  - "quay.io/opendatahub/"
+
+skip_checks: []
+
+min_severity: "LOW"
+
+# Secret workspaces that are known-safe and don't need readOnly warnings.
+# PipelinesAsCode's git-auth workspace is standard and safe to suppress.
+known_safe_secret_workspaces:
+  - "git-auth"

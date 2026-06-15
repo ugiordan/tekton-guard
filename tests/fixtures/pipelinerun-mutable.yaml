@@ -1,0 +1,36 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.openshift.io/repo: https://github.com/example/repo?rev={{revision}}
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push"
+  labels:
+    appstudio.openshift.io/application: test-app
+    appstudio.openshift.io/component: test-comp
+    pipelines.appstudio.openshift.io/type: build
+  name: test-pipeline-on-push
+  namespace: test-tenant
+spec:
+  params:
+  - name: git-url
+    value: '{{source_url}}'
+  - name: revision
+    value: '{{revision}}'
+  - name: output-image
+    value: quay.io/example/image:latest
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/example/pipelines.git
+    - name: revision
+      value: main
+    - name: pathInRepo
+      value: pipeline/build.yaml
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-sa
+  workspaces:
+  - name: git-auth
+    secret:
+      secretName: '{{ git_auth_secret }}'

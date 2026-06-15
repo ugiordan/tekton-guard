@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations:
+    build.appstudio.redhat.com/commit_sha: '{{revision}}'
+  labels:
+    appstudio.openshift.io/application: test-app
+    appstudio.openshift.io/component: test-comp
+    pipelines.appstudio.openshift.io/type: build
+  name: self-ref-pipeline
+  namespace: test-tenant
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: pathInRepo
+      value: .tekton/pipelines/my-pipeline.yaml
+  taskRunTemplate:
+    serviceAccountName: build-sa
+  workspaces:
+  - name: git-auth
+    secret:
+      secretName: '{{ git_auth_secret }}'

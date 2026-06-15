@@ -1,0 +1,43 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: test-pipeline
+spec:
+  params:
+  - name: repository
+    description: The git repo
+  workspaces:
+  - name: shared-data
+  tasks:
+  - name: git-clone
+    taskRef:
+      name: git-clone
+    workspaces:
+    - name: output
+      workspace: shared-data
+  - name: build
+    taskRef:
+      resolver: bundles
+      params:
+      - name: bundle
+        value: quay.io/example/build-task:v1.0
+    runAfter:
+    - git-clone
+    workspaces:
+    - name: source
+      workspace: shared-data
+  - name: external-scan
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/untrusted-org/scan-task.git
+      - name: revision
+        value: develop
+    workspaces:
+    - name: data
+      workspace: shared-data
+  finally:
+  - name: cleanup
+    taskRef:
+      name: cleanup-task

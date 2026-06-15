@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: build-task
+spec:
+  params:
+  - name: repository
+    description: The git repo URL
+  - name: revision
+    description: Git revision
+  results:
+  - name: IMAGE_URL
+    description: Built image URL
+  - name: IMAGE_DIGEST
+    description: Built image digest
+  steps:
+  - name: clone
+    image: docker.io/alpine/git:2.40.1
+    script: |
+      cd /workspace
+      git clone -b $(params.revision) $(params.repository) .
+  - name: build
+    image: quay.io/buildah/buildah:v1.30@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    command: ["/bin/bash", "-c"]
+    args:
+    - buildah build -t $(params.repository)/image .
+  - name: safe-step
+    image: registry.access.redhat.com/ubi9/ubi-minimal@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    env:
+    - name: REPO_URL
+      value: $(params.repository)
+    script: |
+      echo "Building from $REPO_URL"

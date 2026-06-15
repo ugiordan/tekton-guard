@@ -1,0 +1,43 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+    appstudio.openshift.io/application: test-app
+  name: first-pipeline
+  namespace: test-ns
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: main
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: not-tekton
+data:
+  key: value
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  labels:
+    pipelines.appstudio.openshift.io/type: test
+  name: second-pipeline
+  namespace: test-ns
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  taskRunTemplate:
+    serviceAccountName: test-sa
