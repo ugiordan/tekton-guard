@@ -83,6 +83,7 @@ class PipelineTaskDef:
     workspaces: list[WorkspaceBinding] = field(default_factory=list)
     params: list[dict[str, Any]] = field(default_factory=list)
     steps: list[StepDef] = field(default_factory=list)
+    sidecars: list[StepDef] = field(default_factory=list)
     line: int = 0
 
 
@@ -109,6 +110,7 @@ class TektonResource:
     finally_tasks: list[PipelineTaskDef] = field(default_factory=list)
 
     steps: list[StepDef] = field(default_factory=list)
+    sidecars: list[StepDef] = field(default_factory=list)
     results: list[dict[str, Any]] = field(default_factory=list)
 
     raw: dict[str, Any] = field(default_factory=dict)
