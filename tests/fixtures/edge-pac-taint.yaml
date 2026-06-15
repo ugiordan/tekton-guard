@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: tainted-params
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+    appstudio.openshift.io/application: test
+  annotations:
+    build.appstudio.redhat.com/commit_sha: '{{ revision }}'
+spec:
+  params:
+  - name: git-url
+    value: '{{ source_url }}'
+  - name: revision
+    value: '{{ revision }}'
+  - name: safe-param
+    value: "hardcoded-value"
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: '{{ revision }}'
+  taskRunTemplate:
+    serviceAccountName: test-sa
+  workspaces:
+  - name: git-auth
+    secret:
+      secretName: '{{ git_auth_secret }}'

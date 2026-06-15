@@ -24,7 +24,7 @@ for _mod_path in sorted(_pkg_dir.glob("*.py")):
     except Exception:
         logger.error("Failed to import check module: %s", _mod_name, exc_info=True)
 
-_EXPECTED_MIN_CHECKS = 20
+_EXPECTED_MIN_CHECKS = 28
 
 _loaded = get_all_checks()
 if len(_loaded) < _EXPECTED_MIN_CHECKS:
