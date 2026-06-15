@@ -123,9 +123,7 @@ class TestTimeout:
     def test_excessive_task_timeout_flagged(self):
         findings = _run("edge-timeout.yaml")
         limit002 = [f for f in findings if f["rule_id"] == "TKN-LIMIT-002"]
-        # Dedup in run_checks uses (rule_id, file, line_start), so both timeouts
-        # from the same resource share a dedup key. The check itself produces two
-        # findings, but only one survives dedup. Verify at least one fires.
+        # Dedup key includes title, so both pipeline and task timeout findings survive.
         assert len(limit002) >= 1
         # Verify the raw check produces both findings (bypassing dedup)
         from tekton_guard.checks.limits import check_limit_002

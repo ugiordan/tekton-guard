@@ -91,6 +91,9 @@ class FixEngine:
         path = Path(file_path)
         if not path.exists():
             return result
+        # Reject remote/synthetic paths
+        if file_path.startswith("remote:"):
+            return result
 
         content = path.read_text(encoding="utf-8", errors="replace")
         lines = content.split("\n")
@@ -227,7 +230,7 @@ class FixEngine:
             os.close(fd)
             fd = -1  # mark as closed
             os.chmod(tmp_path, original_mode)
-            os.rename(tmp_path, str(path))
+            os.replace(tmp_path, str(path))
         except Exception:
             if fd >= 0:
                 os.close(fd)

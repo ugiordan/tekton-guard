@@ -52,7 +52,7 @@ def check_limit_002(resource: TektonResource, config: ScannerConfig) -> list[dic
                 f"(>{4}h). Long-running pipelines increase the attack window.",
                 cwe="CWE-400",
                 remediation="Reduce pipeline timeout to 4 hours or less.",
-                extra={"timeout_value": str(pipeline_timeout), "timeout_hours": hours},
+                extra={"timeout_type": "pipeline", "timeout_value": str(pipeline_timeout), "timeout_hours": hours},
             ))
 
     if tasks_timeout:
@@ -65,6 +65,6 @@ def check_limit_002(resource: TektonResource, config: ScannerConfig) -> list[dic
                 f"(>{2}h). Long task timeouts increase the attack window.",
                 cwe="CWE-400",
                 remediation="Reduce task timeout to 2 hours or less.",
-                extra={"timeout_value": str(tasks_timeout), "timeout_hours": hours},
+                extra={"timeout_type": "tasks", "timeout_value": str(tasks_timeout), "timeout_hours": hours},
             ))
     return findings

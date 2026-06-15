@@ -34,7 +34,7 @@ class ScannerConfig:
     def is_trusted_git_source(self, url: str) -> bool:
         if not url:
             return False
-        normalized = url.rstrip("/").rstrip(".git")
+        normalized = url.rstrip("/").removesuffix(".git")
         for trusted in self.trusted_git_sources:
             prefix = trusted.rstrip("/")
             if normalized.startswith(prefix):

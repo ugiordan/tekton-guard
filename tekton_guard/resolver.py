@@ -53,6 +53,13 @@ def _fetch_via_clone(url: str, revision: str, path: str, cache_dir: Path | None 
                 return []
 
         target = Path(tmpdir) / path
+        # Validate resolved path stays within tmpdir
+        try:
+            target.resolve().relative_to(Path(tmpdir).resolve())
+        except ValueError:
+            logger.debug("Path traversal detected: %s", path)
+            _cache[cache_key] = []
+            return []
         if not target.exists():
             logger.debug("Path %s not found in %s", path, clone_url)
             _cache[cache_key] = []
@@ -71,6 +78,11 @@ def _fetch_via_clone(url: str, revision: str, path: str, cache_dir: Path | None 
 def _fetch_via_api(url: str, revision: str, path: str) -> list[TektonResource]:
     """Fetch a remote Tekton file via GitHub raw content URL (no git clone needed)."""
     import urllib.request
+
+    # Validate path has no traversal
+    if ".." in path:
+        logger.debug("Rejecting path with traversal: %s", path)
+        return []
 
     cache_key = f"{url}@{revision}:{path}"
     if cache_key in _cache:

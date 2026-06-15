@@ -41,7 +41,7 @@ def run_checks(
     """Run all registered checks against all resources."""
     min_sev = SEVERITY_ORDER.get(config.min_severity.upper(), 0)
     findings: list[dict[str, Any]] = []
-    seen: set[tuple[str, str, int]] = set()
+    seen: set[tuple[str, str, int, str]] = set()
 
     all_checks = get_all_checks()
     for resource in resources:
@@ -52,7 +52,7 @@ def run_checks(
             for f in check_fn(resource, config):
                 if SEVERITY_ORDER.get(f["severity"], 0) < min_sev:
                     continue
-                dedup_key = (f["rule_id"], f["file"], f.get("line_start", 0))
+                dedup_key = (f["rule_id"], f["file"], f.get("line_start", 0), f.get("title", ""))
                 if dedup_key in seen:
                     continue
                 seen.add(dedup_key)

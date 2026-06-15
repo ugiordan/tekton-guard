@@ -57,13 +57,14 @@ def main(argv: list[str] | None = None) -> int:
         default=False,
         help="Always exit 0 regardless of findings (for informational runs)",
     )
-    parser.add_argument(
+    fix_group = parser.add_mutually_exclusive_group()
+    fix_group.add_argument(
         "--fix",
         action="store_true",
         default=False,
         help="Apply safe fixes (SHA pinning, readOnly). Requires GITHUB_TOKEN for git ref resolution.",
     )
-    parser.add_argument(
+    fix_group.add_argument(
         "--fix-dry-run",
         action="store_true",
         default=False,
@@ -119,9 +120,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.diff_base:
         import subprocess
+        git_dir = str(target.parent) if target.is_file() else str(target)
         try:
             diff_output = subprocess.run(
-                ["git", "-C", str(target), "diff", "--name-only", "--diff-filter=ACMR",
+                ["git", "-C", git_dir, "diff", "--name-only", "--diff-filter=ACMR",
                  f"{args.diff_base}...HEAD"],
                 capture_output=True, text=True, timeout=30,
             )
