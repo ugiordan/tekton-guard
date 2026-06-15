@@ -1,0 +1,36 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: privileged-task
+spec:
+  steps:
+  - name: privileged-step
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    securityContext:
+      privileged: true
+    script: |
+      echo "I have root"
+  - name: root-step
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    securityContext:
+      runAsUser: 0
+    script: |
+      echo "Running as root"
+  - name: escalation-step
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    securityContext:
+      allowPrivilegeEscalation: true
+    script: |
+      echo "Can escalate"
+  - name: safe-step
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    securityContext:
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+    script: |
+      echo "Safe"
+  sidecars:
+  - name: privileged-sidecar
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    securityContext:
+      privileged: true

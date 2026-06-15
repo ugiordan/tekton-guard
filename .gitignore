@@ -5,3 +5,4 @@ dist/
 build/
 .pytest_cache/
 .tekton-guard-cache.json
+docs/superpowers/

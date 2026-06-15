@@ -1,0 +1,58 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: docker-socket-task
+spec:
+  volumes:
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
+  - name: safe-vol
+    emptyDir: {}
+  steps:
+  - name: build
+    image: docker.io/docker:24@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: etc-shadow-task
+spec:
+  volumes:
+  - name: shadow
+    hostPath:
+      path: /etc/shadow
+  steps:
+  - name: read-shadow
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: containerd-socket-task
+spec:
+  volumes:
+  - name: containerd
+    hostPath:
+      path: /run/containerd/containerd.sock
+  steps:
+  - name: step1
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: safe-volumes-task
+spec:
+  volumes:
+  - name: workspace
+    emptyDir: {}
+  - name: config
+    configMap:
+      name: my-config
+  steps:
+  - name: step1
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
