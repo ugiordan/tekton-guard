@@ -34,3 +34,26 @@ def test_fail_on_high_catches_high():
 def test_exit_zero_flag():
     code = main([FIXTURES + "/pipelinerun-mutable.yaml", "--exit-zero", "--format", "text"])
     assert code == 0
+
+
+def test_update_baseline_creates_file(tmp_path):
+    baseline_file = str(tmp_path / "baseline.json")
+    code = main([FIXTURES + "/pipelinerun-mutable.yaml", "--format", "text",
+                 "--update-baseline", baseline_file])
+    import json
+    baseline = json.loads(Path(baseline_file).read_text())
+    assert baseline["version"] == "1.0"
+    assert len(baseline["findings"]) > 0
+    assert all(f["rule_id"] for f in baseline["findings"])
+
+
+def test_baseline_suppresses_findings(tmp_path):
+    import json
+    # First generate baseline
+    baseline_file = str(tmp_path / "baseline.json")
+    main([FIXTURES + "/pipelinerun-mutable.yaml", "--format", "text",
+          "--update-baseline", baseline_file])
+    # Then scan with baseline
+    code = main([FIXTURES + "/pipelinerun-mutable.yaml", "--format", "text",
+                 "--baseline", baseline_file])
+    assert code == 0  # all findings suppressed

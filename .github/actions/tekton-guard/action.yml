@@ -1,0 +1,53 @@
+name: tekton-guard
+description: Security scanner for Tekton pipeline definitions
+inputs:
+  target:
+    description: Path to scan (default: current directory)
+    default: "."
+  config:
+    description: Path to config file
+    default: ""
+  fail-on:
+    description: Minimum severity to fail on (INFO, LOW, MEDIUM, HIGH, CRITICAL)
+    default: "HIGH"
+  format:
+    description: Output format (json, sarif, text)
+    default: "sarif"
+  diff-base:
+    description: Only scan files changed since this ref
+    default: ""
+  baseline:
+    description: Path to baseline file for suppression
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - run: pip install git+https://github.com/ugiordan/tekton-guard.git
+      shell: bash
+    - run: |
+        ARGS="${{ inputs.target }}"
+        ARGS="$ARGS --format ${{ inputs.format }}"
+        ARGS="$ARGS --fail-on ${{ inputs.fail-on }}"
+        if [ -n "${{ inputs.config }}" ]; then
+          ARGS="$ARGS --config ${{ inputs.config }}"
+        fi
+        if [ -n "${{ inputs.diff-base }}" ]; then
+          ARGS="$ARGS --diff-base ${{ inputs.diff-base }}"
+        fi
+        if [ -n "${{ inputs.baseline }}" ]; then
+          ARGS="$ARGS --baseline ${{ inputs.baseline }}"
+        fi
+        if [ "${{ inputs.format }}" = "sarif" ]; then
+          ARGS="$ARGS --output tekton-guard-results.sarif"
+        fi
+        tekton-guard $ARGS || true
+      shell: bash
+    - if: inputs.format == 'sarif'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: tekton-guard-results.sarif
+      continue-on-error: true

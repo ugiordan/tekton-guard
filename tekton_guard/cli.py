@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -80,6 +81,21 @@ def main(argv: list[str] | None = None) -> int:
         default="api",
         help="How to fetch remote resources: api (HTTP, fast) or clone (git, works with tokens)",
     )
+    parser.add_argument(
+        "--diff-base",
+        default=None,
+        help="Only report findings in files changed since this git ref (e.g., main). Requires git.",
+    )
+    parser.add_argument(
+        "--baseline",
+        default=None,
+        help="Baseline file to suppress known findings (.tekton-guard-baseline.json)",
+    )
+    parser.add_argument(
+        "--update-baseline",
+        default=None,
+        help="Write current findings as a new baseline file",
+    )
 
     args = parser.parse_args(argv)
 
@@ -96,6 +112,27 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Error: '{args.target}' is not a valid file or directory", file=sys.stderr)
         return 2
 
+    if args.diff_base:
+        import subprocess
+        try:
+            diff_output = subprocess.run(
+                ["git", "-C", str(target), "diff", "--name-only", "--diff-filter=ACMR",
+                 f"{args.diff_base}...HEAD"],
+                capture_output=True, text=True, timeout=30,
+            )
+            changed_files = set(diff_output.stdout.strip().split("\n")) if diff_output.stdout.strip() else set()
+            changed_tekton = {f for f in changed_files if ".tekton/" in f or ".tekton\\" in f}
+            if changed_tekton:
+                resources = [r for r in resources if any(
+                    r.file_path.endswith(f) or f in r.file_path for f in changed_tekton
+                )]
+                print(f"Diff mode: scanning {len(changed_tekton)} changed .tekton/ file(s)", file=sys.stderr)
+            else:
+                resources = []
+                print("Diff mode: no .tekton/ files changed", file=sys.stderr)
+        except Exception as e:
+            print(f"Warning: diff-base failed ({e}), scanning all files", file=sys.stderr)
+
     if args.resolve:
         from tekton_guard.resolver import resolve_remote_refs
         remote = resolve_remote_refs(resources, use_network=True, method=args.resolve_method)
@@ -104,6 +141,46 @@ def main(argv: list[str] | None = None) -> int:
         resources.extend(remote)
 
     findings = run_checks(resources, config)
+
+    if args.baseline:
+        baseline_path = Path(args.baseline)
+        if baseline_path.exists():
+            import hashlib
+            baseline_data = json.loads(baseline_path.read_text())
+            baseline_keys = set()
+            for entry in baseline_data.get("findings", []):
+                key = (entry["rule_id"], entry["file"], entry.get("content_hash", ""))
+                baseline_keys.add(key)
+            original_count = len(findings)
+            findings = [f for f in findings if (
+                f["rule_id"], f["file"],
+                hashlib.sha256(f.get("current_value", f.get("message", "")).encode()).hexdigest()[:16]
+            ) not in baseline_keys]
+            suppressed = original_count - len(findings)
+            if suppressed:
+                print(f"Baseline: suppressed {suppressed} known finding(s)", file=sys.stderr)
+
+    if args.update_baseline:
+        import hashlib
+        from datetime import datetime, timezone
+        baseline = {
+            "version": "1.0",
+            "generated": datetime.now(timezone.utc).isoformat(),
+            "findings": []
+        }
+        for f in findings:
+            content_hash = hashlib.sha256(
+                f.get("current_value", f.get("message", "")).encode()
+            ).hexdigest()[:16]
+            baseline["findings"].append({
+                "rule_id": f["rule_id"],
+                "file": f["file"],
+                "content_hash": content_hash,
+                "line_hint": f.get("line_start", 0),
+                "reason": "",
+            })
+        Path(args.update_baseline).write_text(json.dumps(baseline, indent=2))
+        print(f"Baseline written: {len(baseline['findings'])} finding(s) to {args.update_baseline}", file=sys.stderr)
 
     if args.fix or args.fix_dry_run:
         from tekton_guard.fixer import FixEngine
