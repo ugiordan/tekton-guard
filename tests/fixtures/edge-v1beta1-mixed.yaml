@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: mixed-v1beta1-pipeline
+spec:
+  tasks:
+  - name: old-style-unpinned
+    taskRef:
+      name: buildah
+      bundle: quay.io/untrusted-org/tasks:v1.0
+  - name: old-style-pinned
+    taskRef:
+      name: test
+      bundle: quay.io/opendatahub/tasks@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+  - name: new-style-resolver
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: main

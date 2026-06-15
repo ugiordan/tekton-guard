@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  labels:
+    pipelines.appstudio.openshift.io/type: test
+  name: inline-taskspec-deep
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  taskRunTemplate:
+    serviceAccountName: test-sa
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: pipeline-with-inline-sidecar
+spec:
+  tasks:
+  - name: build-with-sidecar
+    taskSpec:
+      steps:
+      - name: build
+        image: quay.io/buildah/buildah@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        script: |
+          echo "building"
+      sidecars:
+      - name: docker-daemon
+        image: docker.io/docker:dind
+        script: |
+          dockerd --host=unix:///var/run/docker.sock

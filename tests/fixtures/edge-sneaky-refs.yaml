@@ -1,0 +1,50 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  labels:
+    pipelines.appstudio.openshift.io/type: test
+  name: sneaky-refs-test
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: v1.2.3
+  taskRunTemplate:
+    serviceAccountName: test-sa
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  labels:
+    pipelines.appstudio.openshift.io/type: test
+  name: short-sha-test
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: abc123f
+  taskRunTemplate:
+    serviceAccountName: test-sa
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  labels:
+    pipelines.appstudio.openshift.io/type: test
+  name: refs-heads-main-test
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/pipelines.git
+    - name: revision
+      value: refs/heads/main
+  taskRunTemplate:
+    serviceAccountName: test-sa

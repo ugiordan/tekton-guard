@@ -1,0 +1,49 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: complex-workspace-pipeline
+spec:
+  workspaces:
+  - name: shared-data
+  - name: credentials
+  tasks:
+  - name: trusted-clone
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    workspaces:
+    - name: output
+      workspace: shared-data
+  - name: untrusted-scan
+    taskRef:
+      resolver: hub
+      params:
+      - name: name
+        value: scan-task
+    workspaces:
+    - name: source
+      workspace: shared-data
+    - name: creds
+      workspace: credentials
+  - name: also-untrusted
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/random-org/tasks.git
+      - name: revision
+        value: main
+    workspaces:
+    - name: data
+      workspace: shared-data
+  finally:
+  - name: cleanup
+    taskRef:
+      name: cleanup-task
+    workspaces:
+    - name: ws
+      workspace: shared-data

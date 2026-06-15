@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: empty-spec
+spec: {}
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: no-steps
+spec:
+  params:
+  - name: foo
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: empty-tasks
+spec:
+  tasks: []
