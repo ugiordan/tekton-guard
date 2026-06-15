@@ -61,3 +61,4 @@ Found 3 issue(s)
 - [Installation](getting-started/installation.md)
 - [Quick Start](getting-started/quickstart.md)
 - [Detection Rules Reference](reference/rules.md)
+
