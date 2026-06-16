@@ -8,8 +8,6 @@ from typing import Any, Callable
 
 from tekton_guard.config import ScannerConfig
 from tekton_guard.parser import (
-    DIGEST_RE,
-    SHA_RE,
     StepDef,
     TektonResource,
 )

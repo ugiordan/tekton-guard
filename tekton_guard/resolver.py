@@ -6,9 +6,8 @@ import logging
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
 
-from tekton_guard.parser import ResolverRef, TektonResource, parse_file
+from tekton_guard.parser import TektonResource, parse_file
 
 logger = logging.getLogger(__name__)
 

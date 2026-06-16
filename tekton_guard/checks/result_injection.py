@@ -75,7 +75,7 @@ def check_res_003(resource: TektonResource, config: ScannerConfig) -> list[dict]
         return []
     findings = []
     # Resolve line numbers from raw spec params for dedup
-    raw_params = resource.raw.get("spec", {}).get("params", [])
+    resource.raw.get("spec", {}).get("params", [])
     for idx, param in enumerate(resource.params):
         if not isinstance(param, dict):
             continue

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from tekton_guard.config import ScannerConfig
 from tekton_guard.parser import TektonResource
-from tekton_guard.checks._common import _finding, collect_all_containers, register_check
+from tekton_guard.checks._common import _finding, register_check
 
 
 # Not registered: resource requests/limits not parsed into StepDef yet.
