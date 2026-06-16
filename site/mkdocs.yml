@@ -31,14 +31,21 @@ theme:
     - navigation.indexes
     - navigation.instant
     - navigation.path
+    - navigation.sections
     - search.suggest
     - search.highlight
+    - search.share
     - content.code.copy
+    - content.code.annotate
     - content.tabs.link
     - toc.follow
 
 plugins:
   - search
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      zoomable: true
 
 markdown_extensions:
   - admonition
@@ -51,16 +58,31 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
+  - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - attr_list
   - md_in_html
+  - def_list
   - tables
   - toc:
       permalink: true
+
+extra_css:
+  - assets/css/extra.css
+
+extra_javascript:
+  - assets/js/diagram-zoom.js
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ugiordan/tekton-guard
 
 nav:
   - Home: index.md
