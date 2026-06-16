@@ -1,36 +1,17 @@
 # tekton-guard
 
-**Security scanner for Tekton pipeline definitions.**
+**Static security analysis for Tekton pipeline definitions.**
 
-tekton-guard catches supply chain risks in Tekton pipelines that pattern-matching tools (semgrep, kube-linter) can't detect: transitive reference chains, resolver trust classification, cross-resource data flow analysis, and CEL expression injection.
+tekton-guard combines 27 security checks with auto-fix capabilities to detect and remediate supply chain risks in Tekton pipelines. It catches what pattern-matching tools can't: transitive reference chains, resolver trust classification, cross-resource data flow, and CEL expression injection.
 
-## Why tekton-guard?
+<div class="grid cards" markdown>
 
-No dedicated Tekton security scanner existed before this tool. The industry invested heavily in GitHub Actions security (Zizmor, StepSecurity, Scorecard) but nothing equivalent for Tekton, despite it being the CNCF-standard pipeline engine and the foundation of Red Hat's build infrastructure (Konflux, OpenShift Pipelines).
+- :material-shield-check: **27 Security Checks** across 11 categories
+- :material-wrench: **Auto-Fix Engine** pins mutable refs to SHAs
+- :material-source-branch: **CI/CD Integration** with SARIF and baseline suppression
+- :material-graph: **Dependency Graph** with blast radius analysis
 
-Existing tools fall short:
-
-| Tool | Limitation |
-|------|-----------|
-| **Semgrep** | Single-file pattern matching, can't follow Pipeline->Task->StepAction chains |
-| **kube-linter** | Generic K8s checks, no Tekton semantic understanding |
-| **Enterprise Contract** | Validates build outputs/attestations, not pipeline definitions |
-| **Tekton Chains** | Signs pipeline results, doesn't validate pipeline definitions |
-| **IBM/tekton-lint** | Correctness linter, zero security checks |
-
-tekton-guard fills this gap with 27 security checks across 11 categories, purpose-built for Tekton CRDs.
-
-## Key features
-
-- **27 security checks** across 11 categories, from CRITICAL to INFO severity
-- **Auto-fix** (`--fix`): automatically pin mutable git refs to SHAs via GitHub API
-- **CI/CD gate** (`--baseline`, `--diff-base`): integrate into GitHub Actions with baseline suppression
-- **Cross-repo resolution** (`--resolve`): follow git resolver URLs to scan remote pipelines
-- **Dependency graph** (`--graph`): visualize pipeline dependencies and blast radius
-- **SARIF output**: upload to GitHub Code Scanning
-- **PaC-aware**: suppresses false positives from PipelinesAsCode template variables
-
-## How it works
+</div>
 
 ```mermaid
 graph LR
@@ -52,59 +33,18 @@ graph LR
     style I fill:#9ff,stroke:#333
 ```
 
-## Quick example
+## Key Capabilities
 
-```bash
-$ tekton-guard /path/to/repo --format text
+- **27 security checks** across 11 categories, from CRITICAL (CEL injection, runtime socket mounts) to INFO (provenance annotations)
+- **Auto-fix engine** resolves mutable git refs to pinned SHAs via GitHub API, adds readOnly to secret workspaces
+- **CI/CD integration** with GitHub Action, SARIF upload, baseline suppression, and diff-only scanning
+- **Cross-repo resolution** follows git resolver URLs to scan remote Pipeline and Task definitions
+- **Dependency graph** maps pipeline reference chains with blast radius analysis and cycle detection
+- **PaC-aware** false positive suppression for PipelinesAsCode template variables and Konflux patterns
 
-Tekton Security Scan: /path/to/repo
-Found 6 issue(s)
+## What It Checks
 
-[CRITICAL] TKN-TRIG-001: CEL expression references user-controlled webhook fields
-  File: .tekton/pr-check.yaml:12
-  PipelineRun has a CEL expression referencing user-controlled webhook
-  body fields: body.pull_request.title. An attacker can craft a PR title
-  to inject code.
-  Fix: Avoid referencing user-controlled body fields in CEL expressions.
-
-[HIGH] TKN-PIN-001: Mutable pipeline revision
-  File: .tekton/push.yaml:49
-  PipelineRun references pipeline via git resolver with mutable
-  revision 'main' instead of a pinned commit SHA.
-  Fix: Pin revision to a 40-character commit SHA.
-
-[HIGH] TKN-TRUST-001: Pipeline from untrusted source
-  File: .tekton/push.yaml:49
-  PipelineRun references a pipeline from an untrusted git source.
-  Fix: Use a pipeline from a trusted source or update config.
-
-[MEDIUM] TKN-SEC-002: Root user or privilege escalation
-  File: .tekton/build-task.yaml:23
-  Step 'build' has runAsUser: 0. Running as root increases the blast
-  radius of container escapes.
-  Fix: Set runAsNonRoot: true in securityContext.
-
-[LOW] TKN-WS-001: Secret workspace without readOnly
-  File: .tekton/push.yaml:55
-  Workspace backed by secret is not mounted as readOnly.
-  Fix: Add 'readOnly: true' to the workspace binding.
-
-[INFO] TKN-CHAIN-002: Missing provenance annotations
-  File: .tekton/push.yaml:1
-  Build pipeline lacks commit_sha annotation for SLSA provenance.
-  Fix: Add build.appstudio.redhat.com/commit_sha annotation.
-```
-
-Auto-fix mutable refs in one command:
-
-```bash
-$ tekton-guard /path/to/repo --fix --format text
-Fixed 3 finding(s): pinned mutable revisions to commit SHAs.
-```
-
-## What it checks
-
-| Category | Checks | What it catches |
+| Category | Checks | What It Catches |
 |----------|--------|-----------------|
 | **Pinning** | TKN-PIN-001..005 | Mutable pipeline/task/StepAction refs, unpinned bundles, mutable step images |
 | **Trust** | TKN-TRUST-001..003 | Untrusted git/hub sources, unverified cluster tasks |
@@ -118,9 +58,60 @@ Fixed 3 finding(s): pinned mutable revisions to commit SHAs.
 | **Resource Limits** | TKN-LIMIT-002 | Excessive pipeline/task timeouts |
 | **Chains Readiness** | TKN-CHAIN-001..002 | Missing provenance annotations on build pipelines |
 
-## Get started
+!!! info "No existing Tekton security scanner"
+    Research across open source, commercial tools, policy engines, and the Tekton community confirmed no dedicated Tekton pipeline security scanner existed before tekton-guard. The industry invested in GitHub Actions security (Zizmor, StepSecurity) but nothing equivalent for Tekton, despite it being the CNCF-standard pipeline engine and the foundation of Red Hat's build infrastructure (Konflux, OpenShift Pipelines).
 
-- [Installation](getting-started/installation.md)
-- [Quick Start](getting-started/quickstart.md)
-- [Detection Rules Reference](reference/rules.md)
-- [CI Integration](guides/ci-integration.md)
+## Quick Start
+
+```bash
+# Install
+pip install git+https://github.com/ugiordan/tekton-guard.git
+
+# Scan a repository
+tekton-guard /path/to/repo --format text
+
+# Auto-fix mutable refs
+GITHUB_TOKEN=ghp_... tekton-guard /path/to/repo --fix --format text
+```
+
+!!! example "Sample output"
+    ```
+    Tekton Security Scan: /path/to/repo
+    Found 6 issue(s)
+
+    [CRITICAL] TKN-TRIG-001: CEL expression references user-controlled webhook fields
+      File: .tekton/pr-check.yaml:12
+      PipelineRun has a CEL expression referencing user-controlled webhook
+      body fields: body.pull_request.title. An attacker can craft a PR title
+      to inject code.
+      Fix: Avoid referencing user-controlled body fields in CEL expressions.
+
+    [HIGH] TKN-PIN-001: Mutable pipeline revision
+      File: .tekton/push.yaml:49
+      PipelineRun references pipeline via git resolver with mutable
+      revision 'main' instead of a pinned commit SHA.
+      Fix: Pin revision to a 40-character commit SHA.
+
+    [HIGH] TKN-TRUST-001: Pipeline from untrusted source
+      File: .tekton/push.yaml:49
+      PipelineRun references a pipeline from an untrusted git source.
+      Fix: Use a pipeline from a trusted source or update config.
+    ```
+
+## Quick Links
+
+### Getting Started
+- **[Installation](getting-started/installation.md)** - Install from source in 30 seconds
+- **[Quick Start](getting-started/quickstart.md)** - Scan, fix, and gate your first pipeline
+
+### Guides
+- **[CI Integration](guides/ci-integration.md)** - GitHub Action, SARIF upload, PR gating
+- **[Configuration](guides/configuration.md)** - Trust lists, check tuning, workspace suppression
+- **[False Positive Tuning](guides/false-positives.md)** - PaC templates, baseline management
+- **[Cross-Repo Resolution](guides/cross-repo.md)** - Follow git resolver references
+- **[Understanding Findings](guides/findings.md)** - Severity scale, finding structure, examples
+
+### Reference
+- **[Detection Rules](reference/rules.md)** - All 27 checks with severity, CWE, and remediation
+- **[CLI Commands](reference/cli.md)** - Full flag reference including --fix, --baseline, --graph
+- **[Output Formats](reference/output-formats.md)** - JSON, SARIF 2.1.0, text

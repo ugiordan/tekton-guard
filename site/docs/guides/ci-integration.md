@@ -1,5 +1,17 @@
 # CI Integration
 
+Integrate tekton-guard into your CI pipeline to gate PRs on Tekton security findings, upload results to GitHub Code Scanning, and auto-fix mutable references.
+
+!!! tip "Quick setup"
+    The fastest path: use the reusable GitHub Action. It handles Python setup, SARIF upload, and exit code management in a single step.
+
+    ```yaml
+    - uses: ./.github/actions/tekton-guard
+      with:
+        fail-on: HIGH
+        diff-base: ${{ github.event.pull_request.base.sha }}
+    ```
+
 ## CI Workflow
 
 ```mermaid
@@ -23,9 +35,9 @@ graph LR
 
 ## GitHub Actions
 
-### Using the reusable action
+### Using the Reusable Action
 
-tekton-guard ships a composite GitHub Action at `.github/actions/tekton-guard/action.yml`. This is the recommended way to integrate.
+tekton-guard ships a composite GitHub Action at `.github/actions/tekton-guard/action.yml`. This is the recommended integration path.
 
 ```yaml
 name: Tekton Security Scan
@@ -48,20 +60,20 @@ jobs:
           diff-base: ${{ github.event.pull_request.base.sha }}
 ```
 
-#### Action inputs
+#### Action Inputs
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `target` | Path to scan | `.` |
-| `config` | Path to config file | none |
-| `fail-on` | Minimum severity to fail on | `HIGH` |
-| `format` | Output format (`json`, `sarif`, `text`) | `sarif` |
-| `diff-base` | Only scan files changed since this ref | none |
-| `baseline` | Path to baseline file for suppression | none |
+| **`target`** | Path to scan | `.` |
+| **`config`** | Path to config file | none |
+| **`fail-on`** | Minimum severity to fail on | `HIGH` |
+| **`format`** | Output format (`json`, `sarif`, `text`) | `sarif` |
+| **`diff-base`** | Only scan files changed since this ref | none |
+| **`baseline`** | Path to baseline file for suppression | none |
 
 When `format` is `sarif`, the action automatically uploads results to GitHub Code Scanning via `github/codeql-action/upload-sarif`.
 
-### Manual workflow (without reusable action)
+### Manual Workflow (Without Reusable Action)
 
 ```yaml
 name: Tekton Security Scan
@@ -95,7 +107,7 @@ jobs:
           sarif_file: results.sarif
 ```
 
-### PR-only scanning with --diff-base
+### PR-Only Scanning with --diff-base
 
 Scan only files changed in the PR, so you don't fail on pre-existing findings in unchanged files:
 
@@ -108,9 +120,12 @@ Scan only files changed in the PR, so you don't fail on pre-existing findings in
             --fail-on HIGH
 ```
 
-### Baseline suppression
+### Baseline Suppression
 
 For repos with existing findings that can't be fixed immediately, use a baseline to suppress known issues. Only newly introduced findings will fail CI.
+
+!!! warning "Baseline management"
+    Keep your baseline file in version control and regenerate it after fixing findings. A stale baseline silently suppresses findings that should be reported. Review the baseline periodically to ensure it only contains intentionally suppressed findings.
 
 #### Step 1: Generate the baseline
 
@@ -133,7 +148,7 @@ git commit -m "chore: add tekton-guard baseline"
 
 New findings not in the baseline will still fail CI. As you fix existing findings, regenerate the baseline to keep it current.
 
-### Combining diff-base and baseline
+### Combining diff-base and Baseline
 
 For maximum precision, combine both flags. `--diff-base` limits scanning to changed files, and `--baseline` suppresses known findings:
 
@@ -147,7 +162,10 @@ For maximum precision, combine both flags. `--diff-base` limits scanning to chan
             --fail-on HIGH
 ```
 
-### Auto-fix in CI
+### Auto-Fix in CI
+
+!!! warning "Destructive operation"
+    The `--fix` flag modifies YAML files in place. Use `--fix-dry-run` first to preview changes. In CI, always commit fixes to a separate branch or PR.
 
 Run `--fix-dry-run` in CI to show what would be fixed, or use `--fix` in a dedicated workflow to auto-remediate:
 
@@ -179,14 +197,14 @@ Run `--fix-dry-run` in CI to show what would be fixed, or use `--fix` in a dedic
           fi
 ```
 
-### With custom trust configuration
+### With Custom Trust Configuration
 
 ```yaml
       - name: Run scan with config
         run: tekton-guard . --config .tekton-guard.yaml --format sarif --output results.sarif
 ```
 
-### Informational mode (no failure)
+### Informational Mode (No Failure)
 
 ```yaml
       - name: Run scan (informational)
@@ -215,12 +233,12 @@ spec:
         tekton-guard $(params.source-dir) --format json --fail-on HIGH
 ```
 
-## Exit codes
+## Exit Codes
 
 | Code | Meaning |
 |------|---------|
-| `0` | No findings above threshold |
-| `1` | Findings above threshold |
-| `2` | Scanner error (bad path, parse failure) |
+| **`0`** | No findings above threshold |
+| **`1`** | Findings above threshold |
+| **`2`** | Scanner error (bad path, parse failure) |
 
 Use `--fail-on` to control the threshold and `--exit-zero` to suppress failures entirely.

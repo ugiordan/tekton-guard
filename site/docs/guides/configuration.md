@@ -1,8 +1,8 @@
 # Configuration
 
-tekton-guard uses a YAML configuration file to customize trust lists and check behavior.
+tekton-guard uses a YAML configuration file to customize trust lists, check behavior, and suppression rules.
 
-## Config file
+## Config File
 
 Create `.tekton-guard.yaml` in your project root:
 
@@ -29,7 +29,13 @@ known_safe_secret_workspaces:
   - "git-auth"
 ```
 
-## Trust lists
+!!! tip "Default configuration"
+    When no config file is provided, tekton-guard ships with sensible defaults for Konflux/OpenShift Pipelines environments. The defaults trust `opendatahub-io`, `konflux-ci`, `redhat-appstudio`, and `red-hat-data-services` git sources, along with their corresponding Quay registries. See [Default Trust Lists](#default-trust-lists) below for the full list.
+
+## Trust Lists
+
+!!! warning "Trust list implications"
+    Sources added to trust lists are exempt from TKN-TRUST checks. Only add organizations and registries you fully control or have verified. A compromised trusted source bypasses all trust-based detection, including shared workspace isolation checks (TKN-WS-002).
 
 ### trusted_git_sources
 
@@ -53,7 +59,7 @@ trusted_registries:
   - "registry.example.com/"
 ```
 
-## Skipping checks
+## Skipping Checks
 
 Disable specific checks by rule ID:
 
@@ -65,7 +71,10 @@ skip_checks:
   - "TKN-EXFIL-002"   # Network tools are expected in our tasks
 ```
 
-## Known-safe secret workspaces
+!!! warning "Skipping security checks"
+    Only skip checks when you have a documented justification. Never skip CRITICAL checks (TKN-VOL-002, TKN-TRIG-001) without a thorough risk assessment.
+
+## Known-Safe Secret Workspaces
 
 Suppress TKN-WS-001 for workspace names that are known-safe (e.g., standard PaC patterns):
 
@@ -77,28 +86,32 @@ known_safe_secret_workspaces:
 
 The `git-auth` workspace is suppressed by default.
 
-## Default trust lists
+## Default Trust Lists
 
 When no config file is provided, tekton-guard uses these defaults:
 
 **trusted_git_sources:**
+
 - `https://github.com/opendatahub-io/`
 - `https://github.com/red-hat-data-services/`
 - `https://github.com/konflux-ci/`
 - `https://github.com/redhat-appstudio/`
 
 **trusted_registries:**
+
 - `quay.io/konflux-ci/`
 - `quay.io/redhat-appstudio/`
 - `quay.io/opendatahub/`
 
 **known_safe_secret_workspaces:**
+
 - `git-auth`
 
-## Using the config
+## Using the Config
 
 ```bash
 tekton-guard /path/to/repo --config .tekton-guard.yaml
 ```
 
-The `--min-severity` CLI flag overrides the `min_severity` config setting.
+!!! info "CLI overrides"
+    The `--min-severity` CLI flag overrides the `min_severity` config setting. CLI flags always take precedence over config file values.

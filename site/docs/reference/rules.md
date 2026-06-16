@@ -41,7 +41,12 @@ graph TD
     style LOW fill:#388e3c,color:#fff
 ```
 
+---
+
 ## Pinning (TKN-PIN)
+
+!!! danger "Supply chain integrity"
+    Mutable references allow pipeline tampering without any commit to your repository. Pin all references to immutable SHAs or digests. These checks enforce SLSA Build L3 requirements.
 
 ### TKN-PIN-001: Mutable pipeline revision
 - **Severity**: HIGH
@@ -83,7 +88,12 @@ graph TD
 - **Risk**: The StepAction code can be changed without any commit to this repository.
 - **Fix**: Pin the StepAction's git revision to a 40-character commit SHA. Auto-fixable with `--fix`.
 
+---
+
 ## Trust (TKN-TRUST)
+
+!!! warning "Source verification"
+    Untrusted pipeline and task sources can execute arbitrary code in your build environment. Configure `trusted_git_sources` in your config to define which organizations are authorized.
 
 ### TKN-TRUST-001: Pipeline from untrusted source
 - **Severity**: HIGH
@@ -109,7 +119,12 @@ graph TD
 - **Risk**: Cluster tasks are mutable: anyone with write access to the namespace can replace them.
 - **Fix**: Use a bundle or git resolver with a pinned reference instead of cluster-local task names.
 
+---
+
 ## ServiceAccount (TKN-SA)
+
+!!! warning "Privilege management"
+    Build workloads should use dedicated ServiceAccounts with minimal RBAC. The default SA often has broad permissions that violate least-privilege.
 
 ### TKN-SA-001: Default ServiceAccount
 - **Severity**: HIGH
@@ -127,7 +142,12 @@ graph TD
 - **Risk**: The workload inherits the namespace default ServiceAccount, which may have unintended permissions.
 - **Fix**: Explicitly set `serviceAccountName` in `taskRunTemplate` (PipelineRun) or `spec` (TaskRun).
 
+---
+
 ## Workspace (TKN-WS)
+
+!!! note "Data isolation"
+    Workspaces are the primary data-sharing mechanism in Tekton pipelines. Improper workspace configuration can expose secrets or allow untrusted tasks to tamper with build data.
 
 ### TKN-WS-001: Secret workspace without readOnly
 - **Severity**: LOW
@@ -145,7 +165,12 @@ graph TD
 - **Risk**: Untrusted tasks could read secrets or tamper with data from other tasks via the shared workspace.
 - **Fix**: Isolate untrusted tasks with separate workspaces, or use Tekton Trusted Artifacts for verified data passing.
 
+---
+
 ## Result Injection (TKN-RES)
+
+!!! note "Code injection prevention"
+    Parameter and result interpolation in Tekton scripts is the equivalent of GitHub Actions `${{ }}` injection. Untrusted input interpolated into scripts enables arbitrary code execution.
 
 ### TKN-RES-001: Parameter/result interpolation in script block
 - **Severity**: MEDIUM
@@ -171,7 +196,12 @@ graph TD
 - **Risk**: These values come from webhook data and may reach script interpolation points in referenced tasks. An attacker can craft a PR with a malicious branch name or PR body to inject code.
 - **Fix**: Validate PaC-sourced parameter values before using them in scripts. Pass through environment variables instead of direct interpolation.
 
+---
+
 ## Security Context (TKN-SEC)
+
+!!! warning "Container isolation"
+    Privileged containers and root execution weaken the container sandbox. A compromised container with elevated privileges can escape to the host node.
 
 ### TKN-SEC-001: Privileged container
 - **Severity**: HIGH
@@ -189,7 +219,12 @@ graph TD
 - **Risk**: Running as root increases the blast radius of container escapes.
 - **Fix**: Set `runAsNonRoot: true` and `allowPrivilegeEscalation: false` in `securityContext`.
 
+---
+
 ## Volume Mounts (TKN-VOL)
+
+!!! danger "Host access"
+    Host path volumes and container runtime socket mounts are the most severe findings. They grant direct access to the node filesystem or full control over the container runtime.
 
 ### TKN-VOL-001: Host path volume mount
 - **Severity**: HIGH
@@ -207,7 +242,12 @@ graph TD
 - **Risk**: Grants full control over the container runtime, enabling arbitrary container creation, image manipulation, and node compromise.
 - **Fix**: Remove the runtime socket mount. Use rootless build tools (buildah, kaniko) that don't require Docker socket access.
 
+---
+
 ## Trigger Security (TKN-TRIG)
+
+!!! danger "Remote code execution"
+    CEL expression injection (TKN-TRIG-001) is a CRITICAL finding. An attacker can craft a PR title, branch name, or commit message to inject code into the CEL expression evaluator. This is the Tekton equivalent of GitHub Actions `pull_request_target` injection.
 
 ### TKN-TRIG-001: CEL expression injection
 - **Severity**: CRITICAL
@@ -233,7 +273,12 @@ graph TD
 - **Risk**: If the parameter controlling the `when` expression is user-controlled, an attacker could craft input to skip security checks.
 - **Fix**: Remove conditional `when` expressions from security-critical tasks, or validate that the `when` input is not user-controlled.
 
+---
+
 ## Exfiltration (TKN-EXFIL)
+
+!!! note "Data loss prevention"
+    These checks detect combinations of secret access and network capabilities that could enable data exfiltration from the build environment.
 
 ### TKN-EXFIL-001: Task with secret access and network-capable scripts
 - **Severity**: MEDIUM
@@ -251,7 +296,12 @@ graph TD
 - **Risk**: These tools could be used for data exfiltration, even without direct secret access.
 - **Fix**: Review whether network access is necessary. Consider using NetworkPolicy to restrict egress.
 
+---
+
 ## Resource Limits (TKN-LIMIT)
+
+!!! tip "Attack window reduction"
+    Long-running pipelines increase the window of opportunity for compromised tasks. Set reasonable timeouts to limit exposure.
 
 ### TKN-LIMIT-002: Excessive timeout
 - **Severity**: LOW
@@ -261,7 +311,12 @@ graph TD
 - **Risk**: Long-running pipelines increase the attack window for compromised tasks.
 - **Fix**: Reduce pipeline timeout to 4 hours or less, task timeout to 2 hours or less.
 
+---
+
 ## Chains Readiness (TKN-CHAIN)
+
+!!! tip "SLSA provenance"
+    Tekton Chains generates SLSA provenance attestations for builds. These checks ensure your pipelines are configured correctly for Chains to produce and sign provenance data.
 
 ### TKN-CHAIN-001: Build pipeline without Chains annotations
 - **Severity**: LOW
