@@ -2,6 +2,25 @@
 
 tekton-guard can follow git resolver URLs to fetch and scan remote Pipeline/Task definitions.
 
+## Resolution Chain
+
+```mermaid
+graph TD
+    PR[".tekton/push.yaml<br/>(PipelineRun)"] -->|pipelineRef git resolver| PIPELINE["Remote Pipeline<br/>org/pipeline-repo/build.yaml"]
+    PIPELINE -->|taskRef git resolver| TASK1["Remote Task<br/>org/tasks/buildah.yaml"]
+    PIPELINE -->|taskRef bundles| TASK2["Bundle Task<br/>quay.io/org/task@sha256:..."]
+    PIPELINE -->|step ref git| SA["Remote StepAction<br/>org/steps/provision.yaml"]
+    
+    PR -.->|"--resolve"| PIPELINE
+    PIPELINE -.->|"follows refs"| TASK1
+    
+    style PR fill:#e3f2fd,stroke:#1565c0
+    style PIPELINE fill:#fff3e0,stroke:#e65100
+    style TASK1 fill:#fff3e0,stroke:#e65100
+    style TASK2 fill:#e8f5e9,stroke:#2e7d32
+    style SA fill:#fff3e0,stroke:#e65100
+```
+
 ## How it works
 
 Most Tekton PipelineRuns reference external pipelines via git resolver:

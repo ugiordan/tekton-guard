@@ -2,6 +2,45 @@
 
 tekton-guard includes 27 security checks across 11 categories. Each check has a unique rule ID, severity level, and CWE mapping.
 
+## Check Categories Overview
+
+```mermaid
+graph TD
+    subgraph CRITICAL
+        VOL002["TKN-VOL-002<br/>Runtime Socket"]
+        TRIG001["TKN-TRIG-001<br/>CEL Injection"]
+    end
+    subgraph HIGH
+        PIN001["TKN-PIN-001..005<br/>Mutable Refs"]
+        TRUST001["TKN-TRUST-001..002<br/>Untrusted Sources"]
+        SEC001["TKN-SEC-001<br/>Privileged"]
+        VOL001["TKN-VOL-001<br/>Host Path"]
+        SA001["TKN-SA-001<br/>Default SA"]
+    end
+    subgraph MEDIUM
+        TRUST003["TKN-TRUST-003<br/>Cluster Task"]
+        SA002["TKN-SA-002<br/>Missing SA"]
+        WS002["TKN-WS-002<br/>Shared Workspace"]
+        RES001["TKN-RES-001<br/>Script Injection"]
+        RES003["TKN-RES-003<br/>PaC Taint"]
+        SEC002["TKN-SEC-002<br/>Root User"]
+        TRIG002["TKN-TRIG-002..003<br/>Triggers"]
+        EXFIL001["TKN-EXFIL-001<br/>Secret+Network"]
+    end
+    subgraph LOW
+        WS001["TKN-WS-001<br/>ReadOnly"]
+        RES002["TKN-RES-002<br/>Args Interp"]
+        CHAIN001["TKN-CHAIN-001<br/>Chains"]
+        LIMIT002["TKN-LIMIT-002<br/>Timeout"]
+        EXFIL002["TKN-EXFIL-002<br/>Net Tools"]
+    end
+    
+    style CRITICAL fill:#d32f2f,color:#fff
+    style HIGH fill:#f57c00,color:#fff
+    style MEDIUM fill:#fbc02d,color:#000
+    style LOW fill:#388e3c,color:#fff
+```
+
 ## Pinning (TKN-PIN)
 
 ### TKN-PIN-001: Mutable pipeline revision

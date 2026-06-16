@@ -1,5 +1,26 @@
 # CI Integration
 
+## CI Workflow
+
+```mermaid
+graph LR
+    PR["PR Opened"] --> CHECKOUT["Checkout"]
+    CHECKOUT --> SCAN["tekton-guard<br/>--diff-base main<br/>--format sarif"]
+    SCAN --> SARIF["Upload SARIF"]
+    SARIF --> GH["GitHub Code Scanning"]
+    
+    SCAN -->|findings?| FAIL["Exit 1<br/>PR Blocked"]
+    SCAN -->|clean| PASS["Exit 0<br/>PR Passes"]
+    
+    SCAN -.->|--baseline| SUPPRESS["Suppress Known"]
+    SCAN -.->|--fix --create-pr| FIXPR["Auto-Fix PR"]
+    
+    style PR fill:#e3f2fd,stroke:#1565c0
+    style FAIL fill:#ffcdd2,stroke:#c62828
+    style PASS fill:#c8e6c9,stroke:#2e7d32
+    style FIXPR fill:#f3e5f5,stroke:#7b1fa2
+```
+
 ## GitHub Actions
 
 ### Using the reusable action

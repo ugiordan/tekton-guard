@@ -31,30 +31,60 @@ tekton_guard/
 ## Data flow
 
 ```mermaid
-graph LR
-    A[.tekton/*.yaml] --> B[Parser]
-    B --> C[TektonResource objects]
-    C --> D[Checks]
-    D --> E[Findings]
-    E --> F[Formatter]
-    F --> G[JSON / SARIF / Text]
-
-    H[--resolve] --> I[Resolver]
-    I --> C
-
-    E --> J[Fixer]
-    J --> K[Modified YAML files]
-
-    C --> L[Graph Builder]
-    L --> M[Dependency Graph JSON]
-
-    N[--baseline] --> O[Baseline Filter]
-    E --> O
-    O --> F
-
-    P[--diff-base] --> Q[Git Diff Filter]
-    A --> Q
-    Q --> B
+graph TB
+    subgraph Input
+        YAML[".tekton/*.yaml"]
+        CONFIG[".tekton-guard.yaml"]
+        BASELINE["baseline.json"]
+    end
+    
+    subgraph Parser["Parser (ruamel.yaml)"]
+        LOAD["YAML Load<br/>+ PaC Template Handling"]
+        EXTRACT["Extract Resources<br/>PipelineRun / Pipeline / Task"]
+        LOAD --> EXTRACT
+    end
+    
+    subgraph Checks["27 Security Checks"]
+        direction LR
+        PIN["Pinning<br/>5 checks"]
+        TRUST["Trust<br/>3 checks"]
+        SEC["Security<br/>2 checks"]
+        VOL["Volumes<br/>2 checks"]
+        TRIG["Triggers<br/>3 checks"]
+        SA["SA<br/>2 checks"]
+        WS["Workspace<br/>2 checks"]
+        RES["Injection<br/>3 checks"]
+        EXFIL["Exfiltration<br/>2 checks"]
+        LIMIT["Limits<br/>1 check"]
+        CHAIN["Chains<br/>2 checks"]
+    end
+    
+    subgraph Output
+        JSON["JSON"]
+        SARIF["SARIF 2.1.0"]
+        TEXT["Text"]
+    end
+    
+    subgraph Optional
+        FIX["Auto-Fix Engine<br/>SHA Pinning via GitHub API"]
+        GRAPH["Dependency Graph<br/>Blast Radius + Cycles"]
+        RESOLVE["Cross-Repo Resolver<br/>Fetch Remote Pipelines"]
+    end
+    
+    YAML --> LOAD
+    CONFIG --> Checks
+    BASELINE -.->|suppress| Checks
+    EXTRACT --> Checks
+    Checks --> Output
+    
+    RESOLVE -.->|additional resources| EXTRACT
+    FIX -.->|rewrite YAML| YAML
+    EXTRACT -.-> GRAPH
+    
+    style Parser fill:#e3f2fd,stroke:#1565c0
+    style Checks fill:#fff3e0,stroke:#e65100
+    style Output fill:#e8f5e9,stroke:#2e7d32
+    style Optional fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ## Parser

@@ -15,6 +15,25 @@ Each finding includes:
 | `cwe` | Common Weakness Enumeration ID |
 | `remediation` | How to fix the issue |
 
+## Severity Scale
+
+```mermaid
+graph LR
+    CRIT["CRITICAL<br/>Zero-access RCE"]
+    HIGH["HIGH<br/>Supply chain manipulation"]
+    MED["MEDIUM<br/>Conditional exploit"]
+    LOW["LOW<br/>Best practice"]
+    INFO["INFO<br/>Informational"]
+    
+    CRIT --> HIGH --> MED --> LOW --> INFO
+    
+    style CRIT fill:#d32f2f,color:#fff
+    style HIGH fill:#f57c00,color:#fff
+    style MED fill:#fbc02d,color:#000
+    style LOW fill:#388e3c,color:#fff
+    style INFO fill:#1565c0,color:#fff
+```
+
 ## Severity levels
 
 **CRITICAL**: Zero-access remote code execution vectors. Requires immediate action.

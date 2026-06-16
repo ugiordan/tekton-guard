@@ -30,6 +30,28 @@ tekton-guard fills this gap with 27 security checks across 11 categories, purpos
 - **SARIF output**: upload to GitHub Code Scanning
 - **PaC-aware**: suppresses false positives from PipelinesAsCode template variables
 
+## How it works
+
+```mermaid
+graph LR
+    A[".tekton/*.yaml"] --> B["Parser<br/>(ruamel.yaml)"]
+    B --> C["27 Security Checks"]
+    C --> D{Findings?}
+    D -->|Yes| E["JSON / SARIF / Text"]
+    D -->|No| F["Exit 0 ✓"]
+    
+    G["--resolve"] -.-> B
+    H["--fix"] -.-> I["Auto-Fix Engine"]
+    I -.-> A
+    J["--graph"] -.-> K["Dependency Graph"]
+    K -.-> L["Blast Radius"]
+    
+    style A fill:#f9f,stroke:#333
+    style C fill:#ff9,stroke:#333
+    style E fill:#9f9,stroke:#333
+    style I fill:#9ff,stroke:#333
+```
+
 ## Quick example
 
 ```bash
