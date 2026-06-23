@@ -59,6 +59,7 @@ class StepDef:
     env: list[dict[str, Any]] = field(default_factory=list)
     ref: ResolverRef | None = None
     volume_mounts: list[dict[str, Any]] = field(default_factory=list)
+    resources: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -240,6 +241,7 @@ def _extract_steps(steps_data: list) -> list[StepDef]:
             env=_to_plain(s.get("env", [])) or [],
             ref=step_ref,
             volume_mounts=_to_plain(s.get("volumeMounts", [])) or [],
+            resources=_to_plain(s.get("resources", {})) or {},
         )
         result.append(step)
     return result

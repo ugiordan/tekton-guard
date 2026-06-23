@@ -4,14 +4,32 @@ from __future__ import annotations
 
 from tekton_guard.config import ScannerConfig
 from tekton_guard.parser import TektonResource
-from tekton_guard.checks._common import _finding, register_check
+from tekton_guard.checks._common import _finding, collect_all_containers, register_check
 
 
-# Not registered: resource requests/limits not parsed into StepDef yet.
-# Will be registered when parser adds resources field to StepDef.
+@register_check
 def check_limit_001(resource: TektonResource, config: ScannerConfig) -> list[dict]:
     """TKN-LIMIT-001: Missing resource requests/limits."""
-    return []
+    findings = []
+    for ci in collect_all_containers(resource):
+        res = ci.container.resources
+        has_requests = bool(res.get("requests"))
+        has_limits = bool(res.get("limits"))
+        if has_requests or has_limits:
+            continue
+        if not ci.container.image:
+            continue
+        findings.append(_finding(
+            "TKN-LIMIT-001", "LOW", "Missing resource requests/limits",
+            resource, ci.container.image_line,
+            f"{ci.container_type.capitalize()} '{ci.container.name}' in {ci.context} "
+            f"has no resource requests or limits. Unbounded resource consumption "
+            f"can cause DoS or noisy-neighbor issues in shared build clusters.",
+            cwe="CWE-400",
+            remediation="Add resources.requests and resources.limits to the step spec.",
+            extra={"step_name": ci.container.name, "container_type": ci.container_type},
+        ))
+    return findings
 
 
 @register_check
@@ -40,6 +58,10 @@ def check_limit_002(resource: TektonResource, config: ScannerConfig) -> list[dic
         if "m" in val:
             parts = val.split("m")
             hours += float(parts[0]) / 60
+            val = parts[1] if len(parts) > 1 else ""
+        if "s" in val:
+            parts = val.split("s")
+            hours += float(parts[0]) / 3600
         return hours
 
     if pipeline_timeout:

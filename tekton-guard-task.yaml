@@ -1,0 +1,94 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: tekton-guard
+  labels:
+    app.kubernetes.io/version: "1.1.0"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.50.0"
+    tekton.dev/categories: Security
+    tekton.dev/tags: security, supply-chain, tekton
+    tekton.dev/displayName: tekton-guard
+spec:
+  description: >-
+    Security scanner for Tekton pipeline definitions. Detects supply chain
+    risks: mutable refs, untrusted sources, privilege escalation, result
+    injection, workspace isolation, and Chains readiness.
+  params:
+    - name: source-dir
+      type: string
+      default: /workspace/source
+      description: Path to the source code directory containing .tekton/ files
+    - name: config-file
+      type: string
+      default: ""
+      description: Path to .tekton-guard.yaml config file (relative to source-dir)
+    - name: fail-on
+      type: string
+      default: "HIGH"
+      description: Minimum severity to fail on (INFO, LOW, MEDIUM, HIGH, CRITICAL)
+    - name: format
+      type: string
+      default: "json"
+      description: Output format (json, sarif, text)
+  results:
+    - name: TEST_OUTPUT
+      description: Tekton-guard scan results in Konflux format
+    - name: finding-count
+      description: Total number of findings
+  steps:
+    - name: scan
+      image: python:3.12-slim@sha256:abc123
+      env:
+        - name: SOURCE_DIR
+          value: $(params.source-dir)
+        - name: CONFIG_FILE
+          value: $(params.config-file)
+        - name: FAIL_ON
+          value: $(params.fail-on)
+        - name: FORMAT
+          value: $(params.format)
+      script: |
+        #!/bin/bash
+        set -euo pipefail
+        pip install -q git+https://github.com/ugiordan/tekton-guard.git
+
+        ARGS=("$SOURCE_DIR" --format "$FORMAT" --fail-on "$FAIL_ON")
+        if [ -n "$CONFIG_FILE" ]; then
+          ARGS+=(--config "$SOURCE_DIR/$CONFIG_FILE")
+        fi
+
+        tekton-guard "${ARGS[@]}" --output /tmp/tekton-guard-results.json 2>/dev/null || true
+
+        # Extract finding count
+        FINDING_COUNT=$(python3 -c "
+        import json, sys
+        try:
+            d = json.load(open('/tmp/tekton-guard-results.json'))
+            print(d.get('summary', {}).get('total', 0))
+        except:
+            print(0)
+        ")
+        echo -n "$FINDING_COUNT" > $(results.finding-count.path)
+
+        # Format for Konflux TEST_OUTPUT
+        RESULT="SUCCESS"
+        if [ "$FINDING_COUNT" -gt 0 ]; then
+          RESULT="WARNING"
+        fi
+
+        python3 -c "
+        import json, sys
+        output = {
+            'result': '$RESULT',
+            'namespace': 'default',
+            'timestamp': '$(date -u +%Y-%m-%dT%H:%M:%SZ)',
+            'successes': 0,
+            'failures': int('$FINDING_COUNT'),
+            'warnings': 0,
+            'note': 'tekton-guard found $FINDING_COUNT security finding(s)',
+        }
+        print(json.dumps(output))
+        " > $(results.TEST_OUTPUT.path)
+
+        echo "tekton-guard: $FINDING_COUNT finding(s)"

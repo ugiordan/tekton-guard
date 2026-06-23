@@ -165,11 +165,28 @@ def main(argv: list[str] | None = None) -> int:
         baseline_path = Path(args.baseline)
         if baseline_path.exists():
             import hashlib
+            from datetime import datetime, timezone
             baseline_data = json.loads(baseline_path.read_text())
             baseline_keys = set()
+            now = datetime.now(timezone.utc)
+            expired_count = 0
             for entry in baseline_data.get("findings", []):
+                if not entry.get("reason"):
+                    print(f"Baseline: rejecting entry without reason (rule: {entry.get('rule_id')}, file: {entry.get('file')})", file=sys.stderr)
+                    continue
+                expires = entry.get("expires")
+                if expires:
+                    try:
+                        exp_dt = datetime.fromisoformat(expires)
+                        if exp_dt < now:
+                            expired_count += 1
+                            continue
+                    except (ValueError, TypeError):
+                        pass
                 key = (entry["rule_id"], entry["file"], entry.get("content_hash", ""))
                 baseline_keys.add(key)
+            if expired_count:
+                print(f"Baseline: {expired_count} expired entry(ies) ignored", file=sys.stderr)
             original_count = len(findings)
             findings = [f for f in findings if (
                 f["rule_id"], f["file"],
@@ -196,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
                 "file": f["file"],
                 "content_hash": content_hash,
                 "line_hint": f.get("line_start", 0),
-                "reason": "",
+                "reason": "Accepted via --update-baseline",
             })
         Path(args.update_baseline).write_text(json.dumps(baseline, indent=2))
         print(f"Baseline written: {len(baseline['findings'])} finding(s) to {args.update_baseline}", file=sys.stderr)
