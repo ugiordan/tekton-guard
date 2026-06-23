@@ -97,6 +97,47 @@ def detect_cycles(graph: dict[str, Any]) -> list[list[str]]:
     return cycles
 
 
+BASE_SCORES = {"INFO": 1, "LOW": 5, "MEDIUM": 10, "HIGH": 36, "CRITICAL": 62}
+TIER_WEIGHTS = {"INFO": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
+
+
+def calculate_risk_scores(
+    findings: list[dict[str, Any]],
+    blast_radius: dict[str, int],
+) -> list[dict[str, Any]]:
+    """Add risk_score and display_score to each finding based on blast radius.
+
+    Uses additive formula with tier gaps that prevent ranking inversions:
+    risk_score = base_score + blast_bonus
+    display_score = tier_weight * 100 + risk_score
+    """
+    scored = []
+    for f in findings:
+        severity = f.get("severity", "MEDIUM")
+        base = BASE_SCORES.get(severity, 10)
+        tier = TIER_WEIGHTS.get(severity, 2)
+
+        blast_bonus = 0
+        resolver_url = f.get("resolver_url", "")
+        if resolver_url:
+            repo_id = _url_to_repo_id(resolver_url)
+            consumers = blast_radius.get(repo_id, 0)
+            if consumers >= 6:
+                blast_bonus = 10
+            elif consumers >= 2:
+                blast_bonus = 5
+
+        risk_score = base + blast_bonus
+        display_score = tier * 100 + risk_score
+
+        enriched = dict(f)
+        enriched["risk_score"] = risk_score
+        enriched["display_score"] = display_score
+        scored.append(enriched)
+
+    return scored
+
+
 def _extract_repo_id(file_path: str) -> str:
     """Extract a repo identifier from a file path."""
     if file_path.startswith("remote:"):

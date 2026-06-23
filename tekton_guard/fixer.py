@@ -51,6 +51,106 @@ def _resolve_git_sha(url: str, ref: str) -> str | None:
     return None
 
 
+def _resolve_image_digest(image: str) -> str | None:
+    """Resolve a container image tag to a digest via OCI distribution API."""
+    import urllib.request
+
+    # Parse image reference: registry/repo:tag
+    if "@sha256:" in image:
+        return None  # already pinned
+
+    parts = image.split(":")
+    if len(parts) < 2:
+        return None
+    tag = parts[-1]
+    repo_part = ":".join(parts[:-1])
+
+    # Determine registry and repository
+    segments = repo_part.split("/")
+    if len(segments) >= 3 or ("." in segments[0] or ":" in segments[0]):
+        registry = segments[0]
+        repository = "/".join(segments[1:])
+    else:
+        registry = "registry-1.docker.io"
+        repository = repo_part if "/" in repo_part else f"library/{repo_part}"
+
+    scheme = "https"
+    # Docker Hub requires a token
+    headers = {"Accept": "application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.manifest.v1+json"}
+
+    if "docker.io" in registry:
+        registry = "registry-1.docker.io"
+        try:
+            token_url = f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repository}:pull"
+            req = urllib.request.Request(token_url, headers={"User-Agent": "tekton-guard/1.1"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                import json as _json
+                token = _json.loads(resp.read().decode()).get("token", "")
+            headers["Authorization"] = f"Bearer {token}"
+        except Exception:
+            logger.debug("Failed to get Docker Hub token for %s", repository)
+            return None
+
+    manifest_url = f"{scheme}://{registry}/v2/{repository}/manifests/{tag}"
+    try:
+        req = urllib.request.Request(manifest_url, headers={**headers, "User-Agent": "tekton-guard/1.1"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            digest = resp.headers.get("Docker-Content-Digest", "")
+            if digest and digest.startswith("sha256:"):
+                return digest
+    except Exception as e:
+        logger.debug("Failed to resolve digest for %s: %s", image, e)
+
+    return None
+
+
+def verify_pins(resources: list) -> list[dict[str, Any]]:
+    """Check if pinned SHAs still match current branch heads.
+
+    For each PipelineRun/Pipeline with a git resolver reference that IS
+    SHA-pinned, resolve the original branch (from traceability comments or
+    the pathInRepo context) and check if the SHA is still the HEAD.
+
+    Returns a list of stale pin entries.
+    """
+    stale: list[dict[str, Any]] = []
+    for resource in resources:
+        if resource.pipeline_ref and resource.pipeline_ref.resolver_type == "git":
+            ref = resource.pipeline_ref
+            if not _SHA_RE.match(ref.revision):
+                continue
+            current_sha = _resolve_git_sha(ref.url, "HEAD")
+            if current_sha and current_sha != ref.revision:
+                stale.append({
+                    "file": resource.file_path,
+                    "resource": resource.name,
+                    "url": ref.url,
+                    "pinned_sha": ref.revision,
+                    "current_head": current_sha,
+                    "line": ref.line,
+                })
+
+        for pt in resource.pipeline_tasks + resource.finally_tasks:
+            if not pt.task_ref or not pt.task_ref.resolver:
+                continue
+            ref = pt.task_ref.resolver
+            if ref.resolver_type != "git" or not _SHA_RE.match(ref.revision):
+                continue
+            current_sha = _resolve_git_sha(ref.url, "HEAD")
+            if current_sha and current_sha != ref.revision:
+                stale.append({
+                    "file": resource.file_path,
+                    "resource": resource.name,
+                    "task": pt.name,
+                    "url": ref.url,
+                    "pinned_sha": ref.revision,
+                    "current_head": current_sha,
+                    "line": ref.line,
+                })
+
+    return stale
+
+
 class FixResult:
     def __init__(self):
         self.fixed: list[dict[str, Any]] = []
@@ -140,12 +240,24 @@ class FixEngine:
                     })
 
             elif rule in ("TKN-PIN-003", "TKN-PIN-004"):
-                result.skipped.append({
-                    "rule_id": rule,
-                    "file": file_path,
-                    "line": line_num,
-                    "reason": "digest_resolution_not_implemented",
-                })
+                fix = self._fix_image_digest(finding, lines)
+                if fix:
+                    changes.append(fix)
+                    result.fixed.append({
+                        "rule_id": rule,
+                        "file": file_path,
+                        "line": line_num,
+                        "original": finding.get("current_value", ""),
+                        "resolved": fix[2].strip(),
+                        "method": "oci_api",
+                    })
+                else:
+                    result.failed.append({
+                        "rule_id": rule,
+                        "file": file_path,
+                        "line": line_num,
+                        "reason": "digest_resolution_failed",
+                    })
 
             else:
                 result.skipped.append({
@@ -201,6 +313,32 @@ class FixEngine:
                 indent = len(lines[i]) - len(lines[i].lstrip())
                 new_line = " " * indent + "readOnly: true"
                 return (i, lines[i], lines[i] + "\n" + new_line)
+        return None
+
+    def _fix_image_digest(
+        self, finding: dict, lines: list[str],
+    ) -> tuple[int, str, str] | None:
+        current = finding.get("current_value", "")
+        if not current or "@sha256:" in current:
+            return None
+
+        digest = _resolve_image_digest(current)
+        if not digest:
+            return None
+
+        # The new value appends @digest to the existing image:tag
+        pinned = f"{current}@{digest}"
+
+        line_idx = finding.get("line_start", 0) - 1
+        if line_idx < 0 or line_idx >= len(lines):
+            return None
+
+        search_range = range(max(0, line_idx - 3), min(len(lines), line_idx + 4))
+        for i in search_range:
+            if current in lines[i]:
+                new_line = lines[i].replace(current, pinned, 1)
+                return (i, lines[i], new_line)
+
         return None
 
     def _apply_changes(

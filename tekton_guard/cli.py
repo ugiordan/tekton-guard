@@ -13,6 +13,45 @@ from tekton_guard.formatter import format_json, format_sarif, format_text
 from tekton_guard.parser import parse_directory, parse_file
 
 
+def _create_fix_pr(total_fixed: int, total_skipped: int) -> None:
+    """Create a PR with auto-fix changes using gh CLI."""
+    import hashlib
+    import subprocess
+    from datetime import datetime, timezone
+
+    short_hash = hashlib.sha256(datetime.now(timezone.utc).isoformat().encode()).hexdigest()[:8]
+    branch = f"tekton-guard/auto-pin-{short_hash}"
+
+    try:
+        existing = subprocess.run(
+            ["gh", "pr", "list", "--head", "tekton-guard/", "--json", "number"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if existing.returncode == 0 and existing.stdout.strip() not in ("", "[]"):
+            print("Auto-fix PR already exists, skipping creation", file=sys.stderr)
+            return
+
+        subprocess.run(["git", "checkout", "-b", branch], capture_output=True, check=True, timeout=10)
+        subprocess.run(["git", "add", "-A"], capture_output=True, check=True, timeout=10)
+        subprocess.run(
+            ["git", "commit", "-m", f"fix: auto-pin {total_fixed} mutable Tekton refs\n\nApplied by tekton-guard --fix --create-pr"],
+            capture_output=True, check=True, timeout=10,
+        )
+        subprocess.run(["git", "push", "-u", "origin", branch], capture_output=True, check=True, timeout=30)
+
+        body = f"## tekton-guard auto-fix\n\n- **{total_fixed}** findings fixed (SHA pinning, readOnly)\n- **{total_skipped}** findings skipped (require manual review)\n"
+        subprocess.run(
+            ["gh", "pr", "create", "--title", f"fix: auto-pin {total_fixed} mutable Tekton refs",
+             "--body", body, "--head", branch],
+            capture_output=True, check=True, timeout=30,
+        )
+        print(f"Auto-fix PR created on branch {branch}", file=sys.stderr)
+    except FileNotFoundError:
+        print("Error: gh CLI not found. Install it to use --create-pr.", file=sys.stderr)
+    except subprocess.CalledProcessError as e:
+        print(f"Error creating PR: {e}", file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="tekton-guard",
@@ -71,6 +110,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Preview fixes without applying them.",
     )
     parser.add_argument(
+        "--create-pr",
+        action="store_true",
+        default=False,
+        help="With --fix, create a PR with the fixes (requires gh CLI).",
+    )
+    parser.add_argument(
         "--resolve",
         action="store_true",
         default=False,
@@ -101,6 +146,12 @@ def main(argv: list[str] | None = None) -> int:
         "--graph",
         default=None,
         help="Generate dependency graph JSON to this file path",
+    )
+    parser.add_argument(
+        "--verify-pins",
+        action="store_true",
+        default=False,
+        help="Check if pinned SHAs are stale (no longer match branch HEAD). Requires GITHUB_TOKEN.",
     )
 
     args = parser.parse_args(argv)
@@ -158,6 +209,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Graph written: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges", file=sys.stderr)
         if cycles:
             print(f"WARNING: {len(cycles)} cycle(s) detected!", file=sys.stderr)
+
+    if args.verify_pins:
+        from tekton_guard.fixer import verify_pins
+        stale = verify_pins(resources)
+        if stale:
+            print(f"Stale pins: {len(stale)} pinned SHA(s) no longer match branch HEAD", file=sys.stderr)
+            for s in stale:
+                task_info = f" (task: {s['task']})" if "task" in s else ""
+                print(f"  {s['file']}:{s['line']} - {s['url']}{task_info}", file=sys.stderr)
+                print(f"    pinned: {s['pinned_sha'][:12]}... current: {s['current_head'][:12]}...", file=sys.stderr)
+        else:
+            print("All pinned SHAs are up to date", file=sys.stderr)
 
     findings = run_checks(resources, config)
 
@@ -243,6 +306,9 @@ def main(argv: list[str] | None = None) -> int:
             elif target2.is_dir():
                 resources = parse_directory(target2)
             findings = run_checks(resources, config)
+
+            if args.create_pr and total_fixed > 0:
+                _create_fix_pr(total_fixed, total_skipped)
 
     if args.output_format == "json":
         output = format_json(findings, str(target))

@@ -63,19 +63,19 @@ def test_manual_review_checks_skipped(tmp_path):
         assert s["reason"] == "manual_review_required"
 
 
-def test_pin003_004_skipped_as_not_implemented(tmp_path):
+def test_pin003_004_fail_without_network(tmp_path):
     dummy = tmp_path / "test.yaml"
-    dummy.write_text("dummy: content\n")
+    dummy.write_text("image: example.com/img:latest\n")
     fpath = str(dummy)
     engine = FixEngine(dry_run=True)
     findings = [
-        {"rule_id": "TKN-PIN-003", "file": fpath, "line_start": 1},
-        {"rule_id": "TKN-PIN-004", "file": fpath, "line_start": 1},
+        {"rule_id": "TKN-PIN-003", "file": fpath, "line_start": 1, "current_value": "example.com/img:latest"},
+        {"rule_id": "TKN-PIN-004", "file": fpath, "line_start": 1, "current_value": "example.com/img:latest"},
     ]
     result = engine.fix_findings(findings, fpath)
-    assert len(result.skipped) == 2
-    for s in result.skipped:
-        assert "digest" in s["reason"]
+    assert len(result.failed) == 2
+    for f in result.failed:
+        assert "digest" in f["reason"]
 
 
 def test_sha_cache_reuses():
