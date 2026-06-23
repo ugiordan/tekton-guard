@@ -32,7 +32,7 @@ def _create_fix_pr(total_fixed: int, total_skipped: int) -> None:
             return
 
         subprocess.run(["git", "checkout", "-b", branch], capture_output=True, check=True, timeout=10)
-        subprocess.run(["git", "add", "-A"], capture_output=True, check=True, timeout=10)
+        subprocess.run(["git", "add", ".tekton/"], capture_output=True, check=True, timeout=10)
         subprocess.run(
             ["git", "commit", "-m", f"fix: auto-pin {total_fixed} mutable Tekton refs\n\nApplied by tekton-guard --fix --create-pr"],
             capture_output=True, check=True, timeout=10,
@@ -241,6 +241,8 @@ def main(argv: list[str] | None = None) -> int:
                 if expires:
                     try:
                         exp_dt = datetime.fromisoformat(expires)
+                        if exp_dt.tzinfo is None:
+                            exp_dt = exp_dt.replace(tzinfo=timezone.utc)
                         if exp_dt < now:
                             expired_count += 1
                             continue
@@ -253,7 +255,7 @@ def main(argv: list[str] | None = None) -> int:
             original_count = len(findings)
             findings = [f for f in findings if (
                 f["rule_id"], f["file"],
-                hashlib.sha256(f.get("current_value", f.get("message", "")).encode()).hexdigest()[:16]
+                hashlib.sha256(f"{f.get('current_value', f.get('message', ''))}:{f.get('line_start', 0)}".encode()).hexdigest()[:16]
             ) not in baseline_keys]
             suppressed = original_count - len(findings)
             if suppressed:
@@ -268,9 +270,8 @@ def main(argv: list[str] | None = None) -> int:
             "findings": []
         }
         for f in findings:
-            content_hash = hashlib.sha256(
-                f.get("current_value", f.get("message", "")).encode()
-            ).hexdigest()[:16]
+            hash_input = f"{f.get('current_value', f.get('message', ''))}:{f.get('line_start', 0)}"
+            content_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
             baseline["findings"].append({
                 "rule_id": f["rule_id"],
                 "file": f["file"],

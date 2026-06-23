@@ -38,7 +38,8 @@ spec:
       description: Total number of findings
   steps:
     - name: scan
-      image: python:3.12-slim@sha256:abc123
+      # TODO: pin to a real digest in production (crane digest python:3.12-slim)
+      image: python:3.12-slim
       env:
         - name: SOURCE_DIR
           value: $(params.source-dir)
@@ -51,7 +52,7 @@ spec:
       script: |
         #!/bin/bash
         set -euo pipefail
-        pip install -q git+https://github.com/ugiordan/tekton-guard.git
+        pip install -q git+https://github.com/ugiordan/tekton-guard.git@v1.1.0
 
         ARGS=("$SOURCE_DIR" --format "$FORMAT" --fail-on "$FAIL_ON")
         if [ -n "$CONFIG_FILE" ]; then

@@ -51,53 +51,111 @@ def _resolve_git_sha(url: str, ref: str) -> str | None:
     return None
 
 
+_DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+
+
 def _resolve_image_digest(image: str) -> str | None:
-    """Resolve a container image tag to a digest via OCI distribution API."""
+    """Resolve a container image tag to a digest via OCI distribution API.
+
+    Supports Docker Hub, quay.io, ghcr.io, and any OCI-compliant registry
+    that implements the WWW-Authenticate challenge/response flow for public
+    image pulls.
+    """
+    import urllib.error
     import urllib.request
 
-    # Parse image reference: registry/repo:tag
     if "@sha256:" in image:
         return None  # already pinned
 
     parts = image.split(":")
     if len(parts) < 2:
         return None
+
     tag = parts[-1]
     repo_part = ":".join(parts[:-1])
 
+    # If the last colon-separated segment contains "/" it is a registry port,
+    # not a tag (e.g. myregistry.io:5000/repo without an explicit tag).
+    if "/" in tag:
+        return None
+
     # Determine registry and repository
     segments = repo_part.split("/")
-    if len(segments) >= 3 or ("." in segments[0] or ":" in segments[0]):
+    if len(segments) >= 2 and ("." in segments[0] or ":" in segments[0]):
         registry = segments[0]
         repository = "/".join(segments[1:])
+    elif len(segments) == 1:
+        registry = "registry-1.docker.io"
+        repository = f"library/{segments[0]}"
     else:
         registry = "registry-1.docker.io"
-        repository = repo_part if "/" in repo_part else f"library/{repo_part}"
+        repository = repo_part
 
-    scheme = "https"
-    # Docker Hub requires a token
-    headers = {"Accept": "application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.manifest.v1+json"}
+    accept = (
+        "application/vnd.docker.distribution.manifest.v2+json, "
+        "application/vnd.oci.image.manifest.v1+json, "
+        "application/vnd.oci.image.index.v1+json, "
+        "application/vnd.docker.distribution.manifest.list.v2+json"
+    )
+    headers: dict[str, str] = {"Accept": accept, "User-Agent": "tekton-guard/1.1"}
 
-    if "docker.io" in registry:
+    # Normalize Docker Hub hostname (exact match, not substring)
+    if registry in ("docker.io", "index.docker.io"):
         registry = "registry-1.docker.io"
-        try:
+
+    manifest_url = f"https://{registry}/v2/{repository}/manifests/{tag}"
+
+    def _try_fetch(url: str, hdrs: dict[str, str]) -> str | None:
+        req = urllib.request.Request(url, headers=hdrs)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            digest = resp.headers.get("Docker-Content-Digest", "")
+            if digest and _DIGEST_RE.match(digest):
+                return digest
+        return None
+
+    try:
+        if registry == "registry-1.docker.io":
+            # Docker Hub needs a token even for public images
             token_url = f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repository}:pull"
             req = urllib.request.Request(token_url, headers={"User-Agent": "tekton-guard/1.1"})
             with urllib.request.urlopen(req, timeout=10) as resp:
-                import json as _json
-                token = _json.loads(resp.read().decode()).get("token", "")
+                token = json.loads(resp.read().decode()).get("token", "")
             headers["Authorization"] = f"Bearer {token}"
-        except Exception:
-            logger.debug("Failed to get Docker Hub token for %s", repository)
-            return None
 
-    manifest_url = f"{scheme}://{registry}/v2/{repository}/manifests/{tag}"
-    try:
-        req = urllib.request.Request(manifest_url, headers={**headers, "User-Agent": "tekton-guard/1.1"})
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            digest = resp.headers.get("Docker-Content-Digest", "")
-            if digest and digest.startswith("sha256:"):
-                return digest
+        result = _try_fetch(manifest_url, headers)
+        if result:
+            return result
+    except urllib.error.HTTPError as e:
+        if e.code != 401:
+            logger.debug("Failed to resolve digest for %s: HTTP %s", image, e.code)
+            return None
+        # 401: try OCI WWW-Authenticate challenge/response
+        www_auth = e.headers.get("Www-Authenticate", "")
+        if "Bearer" not in www_auth:
+            return None
+        try:
+            realm_match = re.search(r'realm="([^"]+)"', www_auth)
+            service_match = re.search(r'service="([^"]+)"', www_auth)
+            scope_match = re.search(r'scope="([^"]+)"', www_auth)
+            if not realm_match:
+                return None
+            token_url = realm_match.group(1)
+            token_params = []
+            if service_match:
+                token_params.append(f"service={service_match.group(1)}")
+            if scope_match:
+                token_params.append(f"scope={scope_match.group(1)}")
+            else:
+                token_params.append(f"scope=repository:{repository}:pull")
+            full_token_url = f"{token_url}?{'&'.join(token_params)}"
+            token_req = urllib.request.Request(full_token_url, headers={"User-Agent": "tekton-guard/1.1"})
+            with urllib.request.urlopen(token_req, timeout=10) as token_resp:
+                bearer = json.loads(token_resp.read().decode()).get("token", "")
+            if bearer:
+                headers["Authorization"] = f"Bearer {bearer}"
+                return _try_fetch(manifest_url, headers)
+        except Exception:
+            pass
     except Exception as e:
         logger.debug("Failed to resolve digest for %s: %s", image, e)
 
@@ -105,13 +163,18 @@ def _resolve_image_digest(image: str) -> str | None:
 
 
 def verify_pins(resources: list) -> list[dict[str, Any]]:
-    """Check if pinned SHAs still match current branch heads.
+    """Check if pinned SHAs still match the default branch HEAD.
 
     For each PipelineRun/Pipeline with a git resolver reference that IS
-    SHA-pinned, resolve the original branch (from traceability comments or
-    the pathInRepo context) and check if the SHA is still the HEAD.
+    SHA-pinned, resolve the current HEAD of the repo's default branch and
+    compare. Returns a list of stale pin entries.
 
-    Returns a list of stale pin entries.
+    Limitation: once a revision is replaced with a SHA, the original branch
+    name is lost. This function always compares against the repo's default
+    branch HEAD (what GitHub resolves for "HEAD"), not the branch the SHA
+    was originally pinned from. Pins targeting non-default branches (e.g.
+    release-1.2, stable) will be reported as stale even if the branch
+    itself has not changed. This is a known limitation.
     """
     stale: list[dict[str, Any]] = []
     for resource in resources:
