@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: inline-pipelinespec
+  labels:
+    pipelines.appstudio.openshift.io/type: test
+spec:
+  pipelineSpec:
+    tasks:
+    - name: inline-build
+      taskRef:
+        resolver: git
+        params:
+        - name: url
+          value: https://github.com/untrusted-org/tasks.git
+        - name: revision
+          value: develop
+    - name: inline-cluster-task
+      taskRef:
+        name: some-cluster-task
+  taskRunTemplate:
+    serviceAccountName: test-sa
+---
+apiVersion: tekton.dev/v1
+kind: TaskRun
+metadata:
+  name: inline-taskrun
+spec:
+  taskSpec:
+    steps:
+    - name: run-script
+      image: docker.io/alpine:latest
+      script: |
+        echo "running $(params.user-input)"
+  serviceAccountName: test-sa

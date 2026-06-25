@@ -51,17 +51,20 @@ def check_limit_002(resource: TektonResource, config: ScannerConfig) -> list[dic
             return 0
         val = str(val).strip()
         hours = 0.0
-        if "h" in val:
-            parts = val.split("h")
-            hours += float(parts[0])
-            val = parts[1] if len(parts) > 1 else ""
-        if "m" in val:
-            parts = val.split("m")
-            hours += float(parts[0]) / 60
-            val = parts[1] if len(parts) > 1 else ""
-        if "s" in val:
-            parts = val.split("s")
-            hours += float(parts[0]) / 3600
+        try:
+            if "h" in val:
+                parts = val.split("h")
+                hours += float(parts[0])
+                val = parts[1] if len(parts) > 1 else ""
+            if "m" in val:
+                parts = val.split("m")
+                hours += float(parts[0]) / 60
+                val = parts[1] if len(parts) > 1 else ""
+            if "s" in val:
+                parts = val.split("s")
+                hours += float(parts[0]) / 3600
+        except (ValueError, IndexError):
+            return 0
         return hours
 
     if pipeline_timeout:

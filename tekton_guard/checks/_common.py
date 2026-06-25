@@ -78,13 +78,15 @@ def collect_all_containers(resource: TektonResource) -> list[ContainerInfo]:
     """Return all step-like containers (steps + sidecars) from a resource."""
     result: list[ContainerInfo] = []
 
-    if resource.kind in ("Task", "StepAction"):
+    if resource.kind in ("Task", "StepAction", "TaskRun"):
         for step in resource.steps:
-            result.append(ContainerInfo(step, "step", f"Task '{resource.name}'"))
+            ctx = f"Task '{resource.name}'" if resource.kind != "TaskRun" else f"TaskRun '{resource.name}'"
+            result.append(ContainerInfo(step, "step", ctx))
         for sc in resource.sidecars:
-            result.append(ContainerInfo(sc, "sidecar", f"Task '{resource.name}'"))
+            ctx = f"Task '{resource.name}'" if resource.kind != "TaskRun" else f"TaskRun '{resource.name}'"
+            result.append(ContainerInfo(sc, "sidecar", ctx))
 
-    if resource.kind == "Pipeline":
+    if resource.kind in ("Pipeline", "PipelineRun"):
         for pt in resource.pipeline_tasks + resource.finally_tasks:
             for step in pt.steps:
                 result.append(ContainerInfo(step, "step", f"pipeline task '{pt.name}'"))

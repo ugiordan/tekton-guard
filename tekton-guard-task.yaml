@@ -61,33 +61,36 @@ spec:
 
         tekton-guard "${ARGS[@]}" --output /tmp/tekton-guard-results.json 2>/dev/null || true
 
-        # Extract finding count
+        # Extract finding count safely
         FINDING_COUNT=$(python3 -c "
         import json, sys
         try:
             d = json.load(open('/tmp/tekton-guard-results.json'))
             print(d.get('summary', {}).get('total', 0))
-        except:
+        except Exception:
             print(0)
         ")
         echo -n "$FINDING_COUNT" > $(results.finding-count.path)
 
-        # Format for Konflux TEST_OUTPUT
+        # Format for Konflux TEST_OUTPUT using env vars (no shell interpolation in Python)
         RESULT="SUCCESS"
         if [ "$FINDING_COUNT" -gt 0 ]; then
           RESULT="WARNING"
         fi
 
+        export RESULT FINDING_COUNT
+        export TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
         python3 -c "
-        import json, sys
+        import json, os
         output = {
-            'result': '$RESULT',
+            'result': os.environ['RESULT'],
             'namespace': 'default',
-            'timestamp': '$(date -u +%Y-%m-%dT%H:%M:%SZ)',
+            'timestamp': os.environ.get('TIMESTAMP', ''),
             'successes': 0,
-            'failures': int('$FINDING_COUNT'),
+            'failures': int(os.environ['FINDING_COUNT']),
             'warnings': 0,
-            'note': 'tekton-guard found $FINDING_COUNT security finding(s)',
+            'note': f'tekton-guard found {os.environ[\"FINDING_COUNT\"]} security finding(s)',
         }
         print(json.dumps(output))
         " > $(results.TEST_OUTPUT.path)

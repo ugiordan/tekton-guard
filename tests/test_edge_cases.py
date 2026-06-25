@@ -288,3 +288,109 @@ class TestPaCTemplateEdgeCases:
         from tekton_guard.checks._common import _is_pac_template
         # The regex matches any content between {{ }}
         assert _is_pac_template("{{ foo + bar }}")
+
+
+# -----------------------------------------------------------------------
+# Inline pipelineSpec and taskSpec (round 5 findings)
+# -----------------------------------------------------------------------
+
+class TestInlineSpecs:
+    """PipelineRun with inline pipelineSpec and TaskRun with inline taskSpec."""
+
+    def test_inline_pipelinespec_tasks_detected(self):
+        """PipelineRun with inline pipelineSpec should have its tasks checked."""
+        findings = _run("edge-inline-specs.yaml", skip_checks=[])
+        pin002 = [f for f in findings if f["rule_id"] == "TKN-PIN-002"]
+        assert len(pin002) == 1
+        assert pin002[0]["current_value"] == "develop"
+
+    def test_inline_pipelinespec_trust_checked(self):
+        """Inline pipelineSpec tasks from untrusted sources should be flagged."""
+        findings = _run("edge-inline-specs.yaml", skip_checks=[])
+        trust002 = [f for f in findings if f["rule_id"] == "TKN-TRUST-002"]
+        assert len(trust002) >= 1
+
+    def test_inline_pipelinespec_cluster_task_not_trust003(self):
+        """TRUST-003 only fires on Pipeline kind, not PipelineRun with pipelineSpec."""
+        findings = _run("edge-inline-specs.yaml", skip_checks=[])
+        trust003 = [f for f in findings if f["rule_id"] == "TKN-TRUST-003"]
+        # This is expected: TRUST-003 is gated on Pipeline kind
+        assert len(trust003) == 0
+
+    def test_inline_taskrun_mutable_image_flagged(self):
+        """TaskRun with inline taskSpec should have step images checked."""
+        findings = _run("edge-inline-specs.yaml", skip_checks=[])
+        pin004 = [f for f in findings if f["rule_id"] == "TKN-PIN-004"
+                  and f["resource_name"] == "inline-taskrun"]
+        assert len(pin004) == 1
+        assert "alpine:latest" in pin004[0]["current_value"]
+
+    def test_inline_taskrun_script_injection_flagged(self):
+        """TaskRun with inline taskSpec should have scripts checked for injection."""
+        findings = _run("edge-inline-specs.yaml", skip_checks=[])
+        res001 = [f for f in findings if f["rule_id"] == "TKN-RES-001"
+                  and f["resource_name"] == "inline-taskrun"]
+        assert len(res001) == 1
+
+    def test_inline_taskrun_limit001_fires(self):
+        """TaskRun with inline taskSpec steps without resources should fire LIMIT-001."""
+        findings = _run("edge-inline-specs.yaml", skip_checks=[])
+        limit001 = [f for f in findings if f["rule_id"] == "TKN-LIMIT-001"
+                    and f["resource_name"] == "inline-taskrun"]
+        assert len(limit001) == 1
+
+
+# -----------------------------------------------------------------------
+# Duration parser crash resistance (round 5 finding)
+# -----------------------------------------------------------------------
+
+class TestDurationParserCrash:
+    """_parse_duration_hours should not crash on malformed input."""
+
+    def test_malformed_duration_no_crash(self):
+        """Non-numeric timeout values should not crash the scanner."""
+        from tekton_guard.checks.limits import check_limit_002
+        from tekton_guard.parser import TektonResource
+        resource = TektonResource(
+            kind="PipelineRun", api_version="tekton.dev/v1",
+            name="bad-timeout", namespace="", file_path="test.yaml",
+            line_offset=1, raw={"spec": {"timeouts": {"pipeline": "schedule"}}},
+        )
+        # Should not raise, should return empty (0 hours < 4 threshold)
+        config = ScannerConfig(skip_checks=[])
+        findings = check_limit_002(resource, config)
+        assert isinstance(findings, list)
+
+    def test_empty_letter_duration_no_crash(self):
+        """Duration like 'h' or 'm' alone should not crash."""
+        from tekton_guard.checks.limits import check_limit_002
+        from tekton_guard.parser import TektonResource
+        resource = TektonResource(
+            kind="PipelineRun", api_version="tekton.dev/v1",
+            name="letter-timeout", namespace="", file_path="test.yaml",
+            line_offset=1, raw={"spec": {"timeouts": {"pipeline": "h"}}},
+        )
+        config = ScannerConfig(skip_checks=[])
+        findings = check_limit_002(resource, config)
+        assert isinstance(findings, list)
+
+
+# -----------------------------------------------------------------------
+# TKN-LIMIT-001 default skip (round 5 noise fix)
+# -----------------------------------------------------------------------
+
+class TestLimitDefaultSkip:
+    """TKN-LIMIT-001 should be skipped by default config."""
+
+    def test_limit001_skipped_by_default(self):
+        """Default ScannerConfig should skip TKN-LIMIT-001."""
+        # Default config has TKN-LIMIT-001 in skip_checks
+        findings = _run("edge-inline-specs.yaml")
+        limit001 = [f for f in findings if f["rule_id"] == "TKN-LIMIT-001"]
+        assert len(limit001) == 0
+
+    def test_limit001_enabled_when_skip_cleared(self):
+        """When skip_checks is empty, TKN-LIMIT-001 should fire."""
+        findings = _run("edge-inline-specs.yaml", skip_checks=[])
+        limit001 = [f for f in findings if f["rule_id"] == "TKN-LIMIT-001"]
+        assert len(limit001) >= 1

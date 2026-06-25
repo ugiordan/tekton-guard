@@ -24,7 +24,9 @@ class ScannerConfig:
         "quay.io/opendatahub/",
     ])
 
-    skip_checks: list[str] = field(default_factory=list)
+    skip_checks: list[str] = field(default_factory=lambda: [
+        "TKN-LIMIT-001",  # noisy: fires on every step without resources, disable by default
+    ])
     min_severity: str = "LOW"
 
     known_safe_secret_workspaces: list[str] = field(default_factory=lambda: [

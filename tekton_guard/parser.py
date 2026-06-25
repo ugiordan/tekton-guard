@@ -337,6 +337,21 @@ def _parse_document(doc: dict, file_path: str, doc_line: int) -> TektonResource 
         resource.workspaces = _extract_workspace_bindings(spec.get("workspaces", []), _get_line(spec))
         resource.params = _to_plain(spec.get("params", [])) or []
 
+        # Inline pipelineSpec: PipelineRun can embed pipeline definition directly
+        if "pipelineSpec" in spec:
+            ps = spec["pipelineSpec"]
+            if isinstance(ps, dict):
+                resource.pipeline_tasks = _extract_pipeline_tasks(ps.get("tasks", []), _get_line(ps))
+                resource.finally_tasks = _extract_pipeline_tasks(ps.get("finally", []), _get_line(ps))
+
+        # Inline taskSpec: TaskRun can embed task definition directly
+        if "taskSpec" in spec and isinstance(spec["taskSpec"], dict):
+            task_spec = spec["taskSpec"]
+            resource.steps = _extract_steps(task_spec.get("steps", []))
+            resource.sidecars = _extract_steps(task_spec.get("sidecars", []))
+            resource.volumes = _to_plain(task_spec.get("volumes", [])) or []
+            resource.results = _to_plain(task_spec.get("results", [])) or []
+
     if kind == "Pipeline":
         resource.pipeline_tasks = _extract_pipeline_tasks(spec.get("tasks", []), _get_line(spec))
         resource.finally_tasks = _extract_pipeline_tasks(spec.get("finally", []), _get_line(spec))
