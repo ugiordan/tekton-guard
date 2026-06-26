@@ -26,6 +26,7 @@ class ScannerConfig:
 
     skip_checks: list[str] = field(default_factory=lambda: [
         "TKN-LIMIT-001",  # noisy: fires on every step without resources, disable by default
+        "TKN-LOGIC-002",  # noisy: flags any param with security-ish keywords, disable by default
     ])
     min_severity: str = "LOW"
 

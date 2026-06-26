@@ -1,0 +1,102 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: security-in-main-tasks
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+spec:
+  tasks:
+  - name: git-clone
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  - name: sast-scan
+    runAfter: [git-clone]
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  - name: build
+    runAfter: [git-clone]
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: security-in-finally
+spec:
+  tasks:
+  - name: build
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  finally:
+  - name: clair-scan
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: no-finally-pipeline
+spec:
+  tasks:
+  - name: build
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: parallel-untrusted-workspace
+spec:
+  workspaces:
+  - name: shared
+  tasks:
+  - name: clone
+    workspaces:
+    - name: output
+      workspace: shared
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  - name: untrusted-scan
+    workspaces:
+    - name: source
+      workspace: shared
+    taskRef:
+      resolver: hub
+      params:
+      - name: name
+        value: external-scan

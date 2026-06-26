@@ -136,3 +136,31 @@ class TestTriggerDeep:
         trig007 = [f for f in findings if f["rule_id"] == "TKN-TRIG-007"
                    and f["resource_name"] == "listener-with-interceptor"]
         assert len(trig007) == 0
+
+
+class TestPipelineLogic:
+    def test_security_task_in_main_flagged(self):
+        findings = _run("edge-pipeline-logic.yaml")
+        logic001 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-001"
+                    and f["resource_name"] == "security-in-main-tasks"]
+        assert len(logic001) == 1
+        assert logic001[0]["task_name"] == "sast-scan"
+
+    def test_security_task_in_finally_clean(self):
+        findings = _run("edge-pipeline-logic.yaml")
+        logic001 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-001"
+                    and f["resource_name"] == "security-in-finally"]
+        assert len(logic001) == 0
+
+    def test_no_finally_flagged(self):
+        findings = _run("edge-pipeline-logic.yaml")
+        logic004 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-004"
+                    and f["resource_name"] == "no-finally-pipeline"]
+        assert len(logic004) == 1
+
+    def test_parallel_untrusted_workspace_flagged(self):
+        findings = _run("edge-pipeline-logic.yaml")
+        logic003 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-003"
+                    and f["resource_name"] == "parallel-untrusted-workspace"]
+        assert len(logic003) >= 1
+        assert logic003[0]["untrusted"] == "untrusted-scan"

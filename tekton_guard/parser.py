@@ -88,6 +88,7 @@ class PipelineTaskDef:
     params: list[dict[str, Any]] = field(default_factory=list)
     steps: list[StepDef] = field(default_factory=list)
     sidecars: list[StepDef] = field(default_factory=list)
+    run_after: list[str] = field(default_factory=list)
     line: int = 0
 
 
@@ -282,6 +283,8 @@ def _extract_pipeline_tasks(tasks_data: list, base_line: int) -> list[PipelineTa
         if "taskSpec" in t and isinstance(t["taskSpec"], dict):
             inline_steps = _extract_steps(t["taskSpec"].get("steps", []))
             inline_sidecars = _extract_steps(t["taskSpec"].get("sidecars", []))
+        run_after_data = t.get("runAfter", [])
+        run_after = [str(r) for r in run_after_data] if run_after_data else []
         pt = PipelineTaskDef(
             name=str(t.get("name", "")),
             task_ref=task_ref,
@@ -289,6 +292,7 @@ def _extract_pipeline_tasks(tasks_data: list, base_line: int) -> list[PipelineTa
             params=_to_plain(t.get("params", [])) or [],
             steps=inline_steps,
             sidecars=inline_sidecars,
+            run_after=run_after,
             line=_get_line(t, base_line),
         )
         result.append(pt)
