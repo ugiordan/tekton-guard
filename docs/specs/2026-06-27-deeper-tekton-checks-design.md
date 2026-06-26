@@ -20,8 +20,9 @@ Add 14 new checks across 4 categories, taking tekton-guard from 28 to 42 checks.
 
 Three new checks (CHAIN-006, LOGIC-003, TRUST-006) need to see multiple resources simultaneously. The current `check_fn(resource, config)` signature processes one resource at a time.
 
-Solution: add a second check type `CorrelationCheckFn(resources: list[TektonResource], config) -> list[dict]` and a separate registration decorator `@register_correlation_check`. The `run_checks` function runs per-resource checks first, then correlation checks over the full resource list. This is additive: no changes to existing checks.
+Solution: add a second check type `CorrelationCheckFn(resources: list[TektonResource], config) -> list[dict]` and a separate registration decorator `@register_correlation_check`. The `run_checks` function in `checks/__init__.py` is updated to run per-resource checks first, then correlation checks over the full resource list.
 
+In `_common.py`:
 ```python
 CorrelationCheckFn = Callable[[list[TektonResource], ScannerConfig], list[dict]]
 _CORRELATION_REGISTRY: list[CorrelationCheckFn] = []
@@ -29,7 +30,29 @@ _CORRELATION_REGISTRY: list[CorrelationCheckFn] = []
 def register_correlation_check(func: CorrelationCheckFn) -> CorrelationCheckFn:
     _CORRELATION_REGISTRY.append(func)
     return func
+
+def get_all_correlation_checks() -> list[CorrelationCheckFn]:
+    return list(_CORRELATION_REGISTRY)
 ```
+
+In `checks/__init__.py`, update `run_checks` to add after the per-resource loop:
+```python
+    # Run correlation checks (need all resources)
+    for check_fn in get_all_correlation_checks():
+        check_id = check_fn.__doc__.split(":")[0].strip() if check_fn.__doc__ else ""
+        if check_id and not config.should_run_check(check_id):
+            continue
+        for f in check_fn(resources, config):
+            if SEVERITY_ORDER.get(f["severity"], 0) < min_sev:
+                continue
+            dedup_key = (f["rule_id"], f["file"], f.get("line_start", 0), f.get("title", ""))
+            if dedup_key in seen:
+                continue
+            seen.add(dedup_key)
+            findings.append(f)
+```
+
+This is additive: no changes to existing per-resource checks.
 
 ### Parser extensions
 
@@ -55,9 +78,9 @@ Add `--policy-dir` CLI flag for specifying a directory containing VerificationPo
 **TKN-TRIG-004: TriggerTemplate param injection**
 - Severity: HIGH
 - CWE: CWE-94
-- Detect: TriggerTemplate `resourcetemplates` containing PipelineRun params that reference `$(tt.params.*)`. These params originate from TriggerBinding webhook body fields, enabling code injection via crafted webhook payloads.
+- Detect: TriggerTemplate `resourcetemplates` containing `$(tt.params.*)` interpolations. These params flow from webhook body data via TriggerBindings and end up in PipelineRun params, which may reach Task script blocks.
 - Uniqueness: no existing tool scans TriggerTemplate resource templates for injection
-- Implementation: per-resource check on TriggerTemplate kind, scan `raw["spec"]["resourcetemplates"]` for `$(tt.params.*)` patterns
+- Implementation: per-resource check on TriggerTemplate kind. Scans `raw["spec"]["resourcetemplates"]` for `$(tt.params.*)` patterns using regex. This is a heuristic: the check flags the presence of TriggerTemplate param interpolation as a taint source, not full end-to-end taint tracking. Full taint tracking (TriggerBinding -> TriggerTemplate -> PipelineRun -> Task script) requires correlation and is a future enhancement.
 
 **TKN-TRIG-005: EventListener without interceptor**
 - Severity: MEDIUM
@@ -91,9 +114,8 @@ TKN-CHAIN-003 (results type hint) removed: `type: string` is the default in Tekt
 **TKN-CHAIN-004: Chains-consumed result from untrusted task** (renumbered from CHAIN-006)
 - Severity: HIGH
 - CWE: CWE-345
-- Detect: Pipeline task producing IMAGE_URL/IMAGE_DIGEST results is from an untrusted source. Poisoned attestation.
-- Implementation: **correlation check** (needs all resources). For each Pipeline, find tasks with IMAGE_URL/IMAGE_DIGEST in results, check trust status of their taskRef.
-- Note: only feasible when the Task definition is available (inline taskSpec or via --resolve). When the Task is remote and not resolved, the check is skipped with an INFO note.
+- Detect: Pipeline task producing IMAGE_URL/IMAGE_DIGEST results is from an untrusted source (git resolver with untrusted URL, or hub resolver). Poisoned attestation.
+- Implementation: **per-resource check** on Pipeline kind. Iterates `pipeline_tasks`, checks if any task with result-producing names (IMAGE_URL, IMAGE_DIGEST) has an untrusted taskRef. Uses existing `config.is_trusted_git_source()` logic (same as TRUST-001/002). Does NOT need correlation for the common case: the Pipeline resource itself contains both the taskRef and inline result definitions. For `--resolve`d remote Tasks with explicit result definitions, this becomes a correlation check as a future enhancement.
 
 **TKN-CHAIN-005: Build pipeline without SBOM task** (renumbered from CHAIN-007)
 - Severity: LOW
@@ -174,7 +196,13 @@ security_task_patterns:
   - "cyclonedx"
 ```
 
-Centralized list used by: TKN-TRIG-003, TKN-LOGIC-001, TKN-CHAIN-005.
+Centralized list used by: TKN-TRIG-003 (migrated from hardcoded patterns), TKN-LOGIC-001, TKN-CHAIN-005.
+
+Both new config fields must be added to `ScannerConfig` dataclass and `load_config()` in `config.py`. TKN-TRIG-003's existing hardcoded security patterns in `triggers.py` must be migrated to read from `config.security_task_patterns`.
+
+### --policy-dir flag
+
+The `--policy-dir <path>` CLI flag specifies a directory containing VerificationPolicy YAML files. These are loaded by the parser in addition to the scan target. The `find_tekton_files` function is NOT modified. Instead, `cli.py` calls `parse_directory(policy_dir)` separately and appends the results to the resource list before running checks. This ensures VerificationPolicy resources are available for TRUST-006 correlation checks.
 
 ## Expected check count
 
@@ -208,3 +236,15 @@ Rationale: Phase B builds on existing CHAIN checks with familiar data model. Pha
 | TRIG-006 severity too high (R2) | Lowered to MEDIUM |
 | TRUST-006 100% FP without policies (R2) | Skipped silently when no VerificationPolicy files found |
 | Use raw dict for new CRDs (R1) | Specified raw dict access instead of new dataclass fields |
+
+### Round 2 (8 findings)
+
+| Finding | Resolution |
+|---------|------------|
+| CorrelationCheckFn not wired into run_checks (R2-F1, HIGH) | Added explicit run_checks update showing correlation loop with dedup/severity/check-ID logic |
+| CHAIN-004 classified as correlation when mostly per-resource (R2-F2) | Reclassified as per-resource check. Correlation only for future --resolve enhancement |
+| New config fields not loaded by load_config (R2-F3) | Specified that both fields must be added to ScannerConfig and load_config. TRIG-003 migration noted |
+| TRIG-004 claims cross-resource but is per-resource (R2-F4) | Clarified as heuristic pattern matching, not full taint tracking |
+| Phase B ships framework + consumer simultaneously (R2-F6) | Accepted: framework is small (15 lines), tested via consumer |
+| LOGIC-003 duplicates trust logic (R2-F7) | Accepted: reuse via config.is_trusted_git_source() same as other trust checks |
+| --policy-dir interaction unspecified (R2-F8) | Added section specifying separate parse_directory call for policy files |
