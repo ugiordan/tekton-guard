@@ -1,4 +1,4 @@
-"""Tests for deeper Tekton checks (Phase B: supply chain)."""
+"""Tests for deeper Tekton checks (Phase A: triggers, Phase B: supply chain)."""
 
 from pathlib import Path
 
@@ -86,3 +86,53 @@ class TestResolverDeep:
         trust005 = [f for f in findings if f["rule_id"] == "TKN-TRUST-005"
                     and f.get("namespace") == "my-dedicated-ns"]
         assert len(trust005) == 0
+
+
+class TestTriggerDeep:
+    def test_trigger_template_injection_flagged(self):
+        findings = _run("edge-triggers-deep.yaml")
+        trig004 = [f for f in findings if f["rule_id"] == "TKN-TRIG-004"]
+        assert len(trig004) == 1
+        assert trig004[0]["resource_name"] == "template-with-injection"
+
+    def test_clean_template_not_flagged(self):
+        findings = _run("edge-triggers-deep.yaml")
+        trig004 = [f for f in findings if f["rule_id"] == "TKN-TRIG-004"
+                   and f["resource_name"] == "template-clean"]
+        assert len(trig004) == 0
+
+    def test_listener_no_interceptor_flagged(self):
+        findings = _run("edge-triggers-deep.yaml")
+        trig005 = [f for f in findings if f["rule_id"] == "TKN-TRIG-005"]
+        assert len(trig005) == 1
+        assert trig005[0]["resource_name"] == "listener-no-interceptor"
+
+    def test_listener_with_interceptor_clean(self):
+        findings = _run("edge-triggers-deep.yaml")
+        trig005 = [f for f in findings if f["rule_id"] == "TKN-TRIG-005"
+                   and f["resource_name"] == "listener-with-interceptor"]
+        assert len(trig005) == 0
+
+    def test_unrestricted_repo_flagged(self):
+        findings = _run("edge-triggers-deep.yaml")
+        trig006 = [f for f in findings if f["rule_id"] == "TKN-TRIG-006"]
+        assert len(trig006) == 1
+        assert trig006[0]["resource_name"] == "unrestricted-repo"
+
+    def test_restricted_repo_clean(self):
+        findings = _run("edge-triggers-deep.yaml")
+        trig006 = [f for f in findings if f["rule_id"] == "TKN-TRIG-006"
+                   and f["resource_name"] == "restricted-repo"]
+        assert len(trig006) == 0
+
+    def test_listener_default_sa_flagged(self):
+        findings = _run("edge-triggers-deep.yaml")
+        trig007 = [f for f in findings if f["rule_id"] == "TKN-TRIG-007"]
+        assert len(trig007) == 1
+        assert trig007[0]["resource_name"] == "listener-no-interceptor"
+
+    def test_listener_dedicated_sa_clean(self):
+        findings = _run("edge-triggers-deep.yaml")
+        trig007 = [f for f in findings if f["rule_id"] == "TKN-TRIG-007"
+                   and f["resource_name"] == "listener-with-interceptor"]
+        assert len(trig007) == 0

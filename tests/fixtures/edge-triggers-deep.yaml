@@ -1,0 +1,90 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: template-with-injection
+spec:
+  params:
+  - name: git-revision
+  - name: git-repo-url
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1
+    kind: PipelineRun
+    metadata:
+      name: build-$(tt.params.git-revision)
+    spec:
+      params:
+      - name: url
+        value: $(tt.params.git-repo-url)
+      - name: revision
+        value: $(tt.params.git-revision)
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: template-clean
+spec:
+  params:
+  - name: safe-param
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1
+    kind: PipelineRun
+    metadata:
+      name: static-build
+    spec:
+      params:
+      - name: image
+        value: "hardcoded-value"
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: listener-no-interceptor
+spec:
+  triggers:
+  - name: pr-trigger
+    template:
+      ref: template-with-injection
+    bindings:
+    - ref: pr-binding
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: listener-with-interceptor
+spec:
+  serviceAccountName: el-dedicated-sa
+  triggers:
+  - name: pr-trigger
+    interceptors:
+    - ref:
+        name: github
+      params:
+      - name: secretRef
+        value: github-secret
+    template:
+      ref: template-with-injection
+---
+apiVersion: pipelinesascode.tekton.dev/v1alpha1
+kind: Repository
+metadata:
+  name: unrestricted-repo
+spec:
+  url: https://github.com/org/repo
+  git_provider:
+    secret:
+      name: pac-secret
+---
+apiVersion: pipelinesascode.tekton.dev/v1alpha1
+kind: Repository
+metadata:
+  name: restricted-repo
+spec:
+  url: https://github.com/org/repo
+  git_provider:
+    secret:
+      name: pac-secret
+  incoming:
+  - type: webhook-url
+    targets:
+    - main
+    - release-*

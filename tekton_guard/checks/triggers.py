@@ -1,4 +1,4 @@
-"""Trigger security checks (TKN-TRIG-001..003)."""
+"""Trigger security checks (TKN-TRIG-001..007)."""
 
 from __future__ import annotations
 
@@ -121,3 +121,99 @@ def check_trig_003(resource: TektonResource, config: ScannerConfig) -> list[dict
                     extra={"task_name": task_name, "when_input": input_val},
                 ))
     return findings
+
+
+@register_check
+def check_trig_004(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRIG-004: TriggerTemplate param injection."""
+    if resource.kind != "TriggerTemplate":
+        return []
+    findings = []
+    tt_param_re = re.compile(r"\$\(tt\.params\.[^)]+\)")
+    templates = resource.raw.get("spec", {}).get("resourcetemplates", [])
+    for tmpl in templates or []:
+        if not isinstance(tmpl, dict):
+            continue
+        tmpl_str = str(tmpl)
+        matches = tt_param_re.findall(tmpl_str)
+        if matches:
+            findings.append(_finding(
+                "TKN-TRIG-004", "HIGH", "TriggerTemplate param injection",
+                resource, resource.line_offset,
+                f"TriggerTemplate '{resource.name}' interpolates {len(matches)} "
+                f"trigger param(s) in resourcetemplates: {', '.join(matches[:5])}. "
+                f"These values flow from webhook body via TriggerBindings and may "
+                f"reach task script blocks, enabling code injection.",
+                cwe="CWE-94",
+                remediation="Validate trigger params before passing to PipelineRun. Avoid interpolating webhook body fields directly.",
+                extra={"interpolations": matches[:10]},
+            ))
+    return findings
+
+
+@register_check
+def check_trig_005(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRIG-005: EventListener without interceptor."""
+    if resource.kind != "EventListener":
+        return []
+    findings = []
+    triggers = resource.raw.get("spec", {}).get("triggers", [])
+    for i, trigger in enumerate(triggers or []):
+        if not isinstance(trigger, dict):
+            continue
+        interceptors = trigger.get("interceptors", [])
+        if not interceptors:
+            trigger_name = trigger.get("name", f"trigger-{i}")
+            findings.append(_finding(
+                "TKN-TRIG-005", "MEDIUM", "EventListener without interceptor",
+                resource, resource.line_offset,
+                f"EventListener '{resource.name}' trigger '{trigger_name}' has no "
+                f"interceptors configured. Raw webhook payloads reach TriggerBindings "
+                f"without signature verification or filtering.",
+                cwe="CWE-284",
+                remediation="Add a webhook interceptor (GitHub, GitLab, CEL, or Bitbucket) to validate payload authenticity.",
+                extra={"trigger_name": trigger_name},
+            ))
+    return findings
+
+
+@register_check
+def check_trig_006(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRIG-006: PaC Repository allows all branches."""
+    if resource.kind != "Repository":
+        return []
+    spec = resource.raw.get("spec", {})
+    # PaC Repository can restrict via incoming webhook settings
+    incoming = spec.get("incoming", [])
+
+    # If no incoming rules defined, any webhook triggers the pipeline
+    if not incoming:
+        return [_finding(
+            "TKN-TRIG-006", "MEDIUM", "PaC Repository allows all branches",
+            resource, resource.line_offset,
+            f"PaC Repository '{resource.name}' has no incoming webhook restrictions. "
+            f"Any branch push or PR can trigger pipeline execution.",
+            cwe="CWE-284",
+            remediation="Add incoming rules to restrict which branches and events trigger pipelines.",
+        )]
+    return []
+
+
+@register_check
+def check_trig_007(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRIG-007: EventListener with default/missing SA."""
+    if resource.kind != "EventListener":
+        return []
+    sa = resource.raw.get("spec", {}).get("serviceAccountName", "")
+    if sa and sa != "default":
+        return []
+    issue = "default" if sa == "default" else "missing (inherits namespace default)"
+    return [_finding(
+        "TKN-TRIG-007", "MEDIUM", "EventListener with default/missing SA",
+        resource, resource.line_offset,
+        f"EventListener '{resource.name}' has {issue} ServiceAccount. "
+        f"The EventListener SA can create PipelineRuns and should use "
+        f"a dedicated SA with minimal permissions.",
+        cwe="CWE-269",
+        remediation="Set serviceAccountName to a dedicated SA with only PipelineRun create permission.",
+    )]
