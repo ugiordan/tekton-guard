@@ -56,3 +56,93 @@ def check_chain_002(resource: TektonResource, config: ScannerConfig) -> list[dic
         cwe="CWE-345",
         remediation="Add build.appstudio.redhat.com/commit_sha annotation with the source commit SHA.",
     )]
+
+
+@register_check
+def check_chain_003(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-CHAIN-003: VerificationPolicy with unanchored regex."""
+    if resource.kind != "VerificationPolicy":
+        return []
+    findings = []
+    resources_list = resource.raw.get("spec", {}).get("resources", [])
+    for res in resources_list or []:
+        pattern = res.get("resourcePattern", "")
+        if not pattern:
+            continue
+        if not pattern.startswith("^") or not pattern.endswith("$"):
+            findings.append(_finding(
+                "TKN-CHAIN-003", "HIGH", f"VerificationPolicy with unanchored regex: {pattern}",
+                resource, resource.line_offset,
+                f"VerificationPolicy '{resource.name}' has resource pattern '{pattern}' "
+                f"without ^ and $ anchors. Unanchored patterns can match unintended "
+                f"resources (CVE-2026-25542).",
+                cwe="CWE-185",
+                remediation=f"Anchor the pattern: ^{pattern}$",
+                extra={"pattern": pattern},
+            ))
+    return findings
+
+
+@register_check
+def check_chain_004(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-CHAIN-004: Chains-consumed result from untrusted task."""
+    if resource.kind != "Pipeline":
+        return []
+    findings = []
+    for pt in resource.pipeline_tasks + resource.finally_tasks:
+        if not pt.task_ref or not pt.task_ref.resolver:
+            continue
+        ref = pt.task_ref.resolver
+        is_untrusted = False
+        if ref.resolver_type == "git" and not config.is_trusted_git_source(ref.url):
+            is_untrusted = True
+        elif ref.resolver_type == "hub":
+            is_untrusted = True
+        if not is_untrusted:
+            continue
+        # Check if task name suggests it produces Chains-consumed results
+        name_lower = pt.name.lower()
+        if any(kw in name_lower for kw in ("build", "push", "image", "container")):
+            findings.append(_finding(
+                "TKN-CHAIN-004", "HIGH",
+                "Chains-consumed result from untrusted task",
+                resource, ref.line,
+                f"Pipeline task '{pt.name}' appears to produce build/image results "
+                f"but is from an untrusted source ({ref.resolver_type}: {ref.url}). "
+                f"A compromised task can poison Chains attestation.",
+                cwe="CWE-345",
+                remediation="Use trusted, pinned sources for all tasks that produce IMAGE_URL/IMAGE_DIGEST results.",
+                extra={"task_name": pt.name, "resolver_type": ref.resolver_type},
+            ))
+    return findings
+
+
+@register_check
+def check_chain_005(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-CHAIN-005: Build pipeline without SBOM task."""
+    if resource.kind != "Pipeline":
+        return []
+    pipeline_type = resource.labels.get("pipelines.appstudio.openshift.io/type", "")
+    if pipeline_type != "build":
+        return []
+    sbom_patterns = [p for p in config.security_task_patterns if p in ("sbom", "syft", "cyclonedx", "spdx")]
+    if not sbom_patterns:
+        sbom_patterns = ["sbom", "syft", "cyclonedx", "spdx"]
+    all_tasks = resource.pipeline_tasks + resource.finally_tasks
+    for pt in all_tasks:
+        name_lower = pt.name.lower()
+        if any(pat in name_lower for pat in sbom_patterns):
+            return []
+        if pt.task_ref and pt.task_ref.name:
+            ref_lower = pt.task_ref.name.lower()
+            if any(pat in ref_lower for pat in sbom_patterns):
+                return []
+    return [_finding(
+        "TKN-CHAIN-005", "LOW", "Build pipeline without SBOM task",
+        resource, resource.line_offset,
+        f"Pipeline '{resource.name}' is labeled as a build pipeline but has no "
+        f"SBOM generation task (syft, cyclonedx, spdx). Missing software bill "
+        f"of materials reduces supply chain transparency.",
+        cwe="CWE-1059",
+        remediation="Add an SBOM generation task to the build pipeline.",
+    )]

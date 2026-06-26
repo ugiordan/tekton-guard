@@ -24,7 +24,7 @@ for _mod_path in sorted(_pkg_dir.glob("*.py")):
     except Exception:
         logger.error("Failed to import check module: %s", _mod_name, exc_info=True)
 
-_EXPECTED_MIN_CHECKS = 28
+_EXPECTED_MIN_CHECKS = 31
 
 _loaded = get_all_checks()
 if len(_loaded) < _EXPECTED_MIN_CHECKS:
@@ -57,5 +57,19 @@ def run_checks(
                     continue
                 seen.add(dedup_key)
                 findings.append(f)
+
+    from tekton_guard.checks._common import get_all_correlation_checks
+    for check_fn in get_all_correlation_checks():
+        check_id = check_fn.__doc__.split(":")[0].strip() if check_fn.__doc__ else ""
+        if check_id and not config.should_run_check(check_id):
+            continue
+        for f in check_fn(resources, config):
+            if SEVERITY_ORDER.get(f["severity"], 0) < min_sev:
+                continue
+            dedup_key = (f["rule_id"], f["file"], f.get("line_start", 0), f.get("title", ""))
+            if dedup_key in seen:
+                continue
+            seen.add(dedup_key)
+            findings.append(f)
 
     return findings

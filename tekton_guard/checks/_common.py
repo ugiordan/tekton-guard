@@ -32,6 +32,19 @@ def get_all_checks() -> list[CheckFn]:
     return list(_REGISTRY)
 
 
+CorrelationCheckFn = Callable[[list["TektonResource"], ScannerConfig], list[dict]]
+_CORRELATION_REGISTRY: list[CorrelationCheckFn] = []
+
+
+def register_correlation_check(func: CorrelationCheckFn) -> CorrelationCheckFn:
+    _CORRELATION_REGISTRY.append(func)
+    return func
+
+
+def get_all_correlation_checks() -> list[CorrelationCheckFn]:
+    return list(_CORRELATION_REGISTRY)
+
+
 def _is_pac_template(value: str) -> bool:
     stripped = value.strip().strip("'\"")
     return bool(PAC_TEMPLATE_RE.match(stripped))

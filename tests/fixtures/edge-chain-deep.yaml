@@ -1,0 +1,55 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: build-pipeline
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+spec:
+  tasks:
+  - name: git-clone
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  - name: build-image
+    taskRef:
+      resolver: hub
+      params:
+      - name: name
+        value: buildah
+  - name: push-container
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/untrusted-org/tasks.git
+      - name: revision
+        value: main
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: build-with-sbom
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+spec:
+  tasks:
+  - name: build
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  - name: syft-sbom-gen
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2

@@ -12,7 +12,9 @@ from typing import Any
 from ruamel.yaml import YAML
 
 
-TEKTON_KINDS = {"PipelineRun", "Pipeline", "Task", "TaskRun", "StepAction"}
+TEKTON_KINDS = {"PipelineRun", "Pipeline", "Task", "TaskRun", "StepAction",
+                "TriggerTemplate", "TriggerBinding", "EventListener",
+                "Repository", "VerificationPolicy"}
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DIGEST_RE = re.compile(r"@sha256:[0-9a-f]{64}")
 

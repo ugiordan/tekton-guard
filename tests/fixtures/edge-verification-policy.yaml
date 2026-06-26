@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1alpha1
+kind: VerificationPolicy
+metadata:
+  name: anchored-policy
+spec:
+  resources:
+  - resourcePattern: "^https://github.com/opendatahub-io/.*$"
+    keys:
+    - name: my-key
+---
+apiVersion: tekton.dev/v1alpha1
+kind: VerificationPolicy
+metadata:
+  name: unanchored-policy
+spec:
+  resources:
+  - resourcePattern: "https://github.com/opendatahub-io/"
+    keys:
+    - name: my-key
+  - resourcePattern: "^quay.io/my-org/"
+    keys:
+    - name: another-key

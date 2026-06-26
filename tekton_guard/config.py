@@ -29,6 +29,17 @@ class ScannerConfig:
     ])
     min_severity: str = "LOW"
 
+    security_task_patterns: list[str] = field(default_factory=lambda: [
+        "scan", "sign", "verify", "attest", "cosign",
+        "enterprise-contract", "sast", "clair", "clamav",
+        "sbom", "syft", "cyclonedx",
+    ])
+
+    shared_namespaces: list[str] = field(default_factory=lambda: [
+        "tekton-pipelines",
+        "openshift-pipelines",
+    ])
+
     known_safe_secret_workspaces: list[str] = field(default_factory=lambda: [
         "git-auth",
     ])
@@ -78,5 +89,9 @@ def load_config(config_path: str | Path | None = None) -> ScannerConfig:
         kwargs["min_severity"] = data["min_severity"]
     if "known_safe_secret_workspaces" in data:
         kwargs["known_safe_secret_workspaces"] = data["known_safe_secret_workspaces"]
+    if "security_task_patterns" in data:
+        kwargs["security_task_patterns"] = data["security_task_patterns"]
+    if "shared_namespaces" in data:
+        kwargs["shared_namespaces"] = data["shared_namespaces"]
 
     return ScannerConfig(**kwargs)

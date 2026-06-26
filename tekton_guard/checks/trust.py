@@ -1,10 +1,17 @@
-"""Trust checks (TKN-TRUST-001..003)."""
+"""Trust checks (TKN-TRUST-001..006)."""
 
 from __future__ import annotations
 
+import re as _re
+
 from tekton_guard.config import ScannerConfig
 from tekton_guard.parser import TektonResource
-from tekton_guard.checks._common import _finding, _is_pac_template, register_check
+from tekton_guard.checks._common import (
+    _finding,
+    _is_pac_template,
+    register_check,
+    register_correlation_check,
+)
 
 
 @register_check
