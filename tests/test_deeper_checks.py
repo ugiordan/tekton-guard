@@ -60,3 +60,29 @@ class TestChainDeep:
         chain005 = [f for f in findings if f["rule_id"] == "TKN-CHAIN-005"
                     and f["resource_name"] == "build-with-sbom"]
         assert len(chain005) == 0
+
+
+class TestResolverDeep:
+    def test_http_without_digest_flagged(self):
+        findings = _run("edge-resolver-deep.yaml")
+        trust004 = [f for f in findings if f["rule_id"] == "TKN-TRUST-004"]
+        assert len(trust004) == 1
+        assert trust004[0].get("task_name") or "fetch-task" in trust004[0].get("message", "")
+
+    def test_http_with_digest_clean(self):
+        findings = _run("edge-resolver-deep.yaml")
+        trust004 = [f for f in findings if f["rule_id"] == "TKN-TRUST-004"
+                    and "fetch-with-digest" in f.get("message", "")]
+        assert len(trust004) == 0
+
+    def test_cluster_shared_namespace_flagged(self):
+        findings = _run("edge-resolver-deep.yaml")
+        trust005 = [f for f in findings if f["rule_id"] == "TKN-TRUST-005"]
+        assert len(trust005) == 1
+        assert trust005[0].get("namespace") == "tekton-pipelines"
+
+    def test_cluster_dedicated_namespace_clean(self):
+        findings = _run("edge-resolver-deep.yaml")
+        trust005 = [f for f in findings if f["rule_id"] == "TKN-TRUST-005"
+                    and f.get("namespace") == "my-dedicated-ns"]
+        assert len(trust005) == 0

@@ -1,0 +1,36 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: http-resolver-pipeline
+spec:
+  tasks:
+  - name: fetch-task
+    taskRef:
+      resolver: http
+      params:
+      - name: url
+        value: https://example.com/tasks/build.yaml
+  - name: fetch-with-digest
+    taskRef:
+      resolver: http
+      params:
+      - name: url
+        value: https://example.com/tasks/build.yaml
+      - name: digest
+        value: sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+  - name: cluster-shared
+    taskRef:
+      resolver: cluster
+      params:
+      - name: name
+        value: build-task
+      - name: namespace
+        value: tekton-pipelines
+  - name: cluster-dedicated
+    taskRef:
+      resolver: cluster
+      params:
+      - name: name
+        value: my-task
+      - name: namespace
+        value: my-dedicated-ns

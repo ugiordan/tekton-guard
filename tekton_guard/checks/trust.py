@@ -91,3 +91,115 @@ def check_trust_003(resource: TektonResource, config: ScannerConfig) -> list[dic
             extra={"task_name": pt.name, "cluster_task": pt.task_ref.name},
         ))
     return findings
+
+
+@register_check
+def check_trust_004(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRUST-004: HTTP resolver without digest."""
+    findings = []
+    all_refs = []
+
+    if resource.pipeline_ref and resource.pipeline_ref.resolver_type == "http":
+        all_refs.append(("pipelineRef", resource.pipeline_ref, resource.name))
+
+    for pt in resource.pipeline_tasks + resource.finally_tasks:
+        if pt.task_ref and pt.task_ref.resolver and pt.task_ref.resolver.resolver_type == "http":
+            all_refs.append((f"task '{pt.name}'", pt.task_ref.resolver, pt.name))
+
+    for context, ref, name in all_refs:
+        digest = ref.params.get("digest", "")
+        if not digest:
+            findings.append(_finding(
+                "TKN-TRUST-004", "HIGH", "HTTP resolver without digest",
+                resource, ref.line,
+                f"{context} in '{resource.name}' uses HTTP resolver without a digest param. "
+                f"Without integrity verification, a MITM or compromised server can inject "
+                f"malicious task/pipeline definitions.",
+                cwe="CWE-829",
+                remediation="Add a digest param: digest: sha256:<hash>",
+                extra={"resolver_type": "http", "resolver_url": ref.params.get("url", "")},
+            ))
+    return findings
+
+
+@register_check
+def check_trust_005(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRUST-005: Cluster resolver in shared namespace."""
+    findings = []
+    for pt in resource.pipeline_tasks + resource.finally_tasks:
+        if not pt.task_ref or not pt.task_ref.resolver:
+            continue
+        ref = pt.task_ref.resolver
+        if ref.resolver_type != "cluster":
+            continue
+        ns = ref.params.get("namespace", "")
+        if ns and ns in config.shared_namespaces:
+            findings.append(_finding(
+                "TKN-TRUST-005", "MEDIUM",
+                "Cluster resolver in shared namespace",
+                resource, ref.line,
+                f"Pipeline task '{pt.name}' references a task via cluster resolver in "
+                f"shared namespace '{ns}'. Any user with Task create permission in that "
+                f"namespace can replace the referenced task.",
+                cwe="CWE-829",
+                remediation="Use a dedicated namespace for cluster-resolver tasks, or switch to bundle/git resolver with pinning.",
+                extra={"task_name": pt.name, "namespace": ns, "resolver_type": "cluster"},
+            ))
+    return findings
+
+
+@register_correlation_check
+def check_trust_006(resources: list, config: ScannerConfig) -> list[dict]:
+    """TKN-TRUST-006: Bundle without VerificationPolicy coverage."""
+    # Collect all VerificationPolicy patterns
+    vp_patterns = []
+    for r in resources:
+        if r.kind != "VerificationPolicy":
+            continue
+        for res_entry in r.raw.get("spec", {}).get("resources", []):
+            pattern = res_entry.get("resourcePattern", "")
+            if pattern:
+                vp_patterns.append(pattern)
+
+    if not vp_patterns:
+        return []  # No policies found, skip silently (avoids 100% FP)
+
+    findings = []
+    for r in resources:
+        for pt in r.pipeline_tasks + r.finally_tasks:
+            if not pt.task_ref or not pt.task_ref.resolver:
+                continue
+            ref = pt.task_ref.resolver
+            if ref.resolver_type != "bundles":
+                continue
+            bundle = ref.bundle
+            if not bundle:
+                continue
+            # Check if any VP pattern covers this bundle
+            covered = False
+            for pattern in vp_patterns:
+                try:
+                    if _re.search(pattern, bundle):
+                        covered = True
+                        break
+                except _re.error:
+                    pass
+            if not covered:
+                findings.append({
+                    "rule_id": "TKN-TRUST-006",
+                    "severity": "MEDIUM",
+                    "title": "Bundle without VerificationPolicy coverage",
+                    "file": r.file_path,
+                    "line_start": ref.line,
+                    "line_end": ref.line,
+                    "message": f"Pipeline task '{pt.name}' uses bundle '{bundle}' "
+                               f"which is not covered by any VerificationPolicy pattern. "
+                               f"Bundle content is not signature-verified before execution.",
+                    "resource_kind": r.kind,
+                    "resource_name": r.name,
+                    "cwe": "CWE-345",
+                    "remediation": "Create a VerificationPolicy with a resourcePattern covering this bundle's registry.",
+                    "task_name": pt.name,
+                    "bundle": bundle,
+                })
+    return findings
