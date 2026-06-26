@@ -18,7 +18,7 @@ Add 14 new checks across 4 categories, taking tekton-guard from 28 to 42 checks.
 
 ### Cross-resource correlation
 
-Three new checks (CHAIN-006, LOGIC-003, TRUST-006) need to see multiple resources simultaneously. The current `check_fn(resource, config)` signature processes one resource at a time.
+One new check (TRUST-006) needs to see multiple resources simultaneously (VerificationPolicy + Pipeline/PipelineRun bundles). The current `check_fn(resource, config)` signature processes one resource at a time.
 
 Solution: add a second check type `CorrelationCheckFn(resources: list[TektonResource], config) -> list[dict]` and a separate registration decorator `@register_correlation_check`. The `run_checks` function in `checks/__init__.py` is updated to run per-resource checks first, then correlation checks over the full resource list.
 
@@ -202,13 +202,27 @@ Both new config fields must be added to `ScannerConfig` dataclass and `load_conf
 
 ### --policy-dir flag
 
-The `--policy-dir <path>` CLI flag specifies a directory containing VerificationPolicy YAML files. These are loaded by the parser in addition to the scan target. The `find_tekton_files` function is NOT modified. Instead, `cli.py` calls `parse_directory(policy_dir)` separately and appends the results to the resource list before running checks. This ensures VerificationPolicy resources are available for TRUST-006 correlation checks.
+The `--policy-dir <path>` CLI flag specifies a directory containing VerificationPolicy YAML files. These are loaded by `cli.py` using `parse_file` on each YAML file in the directory (not `parse_directory`, which only searches `.tekton/` subdirectories). Implementation:
+
+```python
+if args.policy_dir:
+    policy_path = Path(args.policy_dir)
+    for p in sorted(policy_path.glob("*.yaml")) + sorted(policy_path.glob("*.yml")):
+        resources.extend(parse_file(p))
+```
+
+This ensures VerificationPolicy resources are available for TRUST-006 correlation checks without modifying `find_tekton_files`.
 
 ## Expected check count
 
-- Existing: 28 checks (27 registered + 1 disabled TKN-LIMIT-001)
-- New: 14 checks (12 per-resource + 2 correlation)
-- Total: 42 checks (39 registered, 3 disabled by default: LIMIT-001, LOGIC-002, and correlation checks without policy data)
+- Existing: 28 checks (27 active + 1 disabled TKN-LIMIT-001)
+- New: 14 checks (13 per-resource + 1 correlation)
+- Total: 42 checks (40 active by default, 2 disabled: LIMIT-001, LOGIC-002)
+- TRUST-006 is a correlation check: registered but produces zero findings when no VerificationPolicy files are provided (no FP)
+
+### Correlation check finding construction
+
+Correlation checks cannot use the standard `_finding()` helper (which requires a single `TektonResource`). Instead, correlation checks construct finding dicts manually, picking the most relevant resource for `file`/`line_start`/`resource_kind`/`resource_name` fields. For TRUST-006, the finding references the Pipeline/PipelineRun containing the bundle reference.
 
 ## Phased Implementation (reordered per review feedback)
 
