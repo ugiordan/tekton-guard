@@ -185,21 +185,15 @@ def check_trust_006(resources: list, config: ScannerConfig) -> list[dict]:
                 except _re.error:
                     pass
             if not covered:
-                findings.append({
-                    "rule_id": "TKN-TRUST-006",
-                    "severity": "MEDIUM",
-                    "title": "Bundle without VerificationPolicy coverage",
-                    "file": r.file_path,
-                    "line_start": ref.line,
-                    "line_end": ref.line,
-                    "message": f"Pipeline task '{pt.name}' uses bundle '{bundle}' "
-                               f"which is not covered by any VerificationPolicy pattern. "
-                               f"Bundle content is not signature-verified before execution.",
-                    "resource_kind": r.kind,
-                    "resource_name": r.name,
-                    "cwe": "CWE-345",
-                    "remediation": "Create a VerificationPolicy with a resourcePattern covering this bundle's registry.",
-                    "task_name": pt.name,
-                    "bundle": bundle,
-                })
+                findings.append(_finding(
+                    "TKN-TRUST-006", "MEDIUM",
+                    "Bundle without VerificationPolicy coverage",
+                    r, ref.line,
+                    f"Pipeline task '{pt.name}' uses bundle '{bundle}' "
+                    f"which is not covered by any VerificationPolicy pattern. "
+                    f"Bundle content is not signature-verified before execution.",
+                    cwe="CWE-345",
+                    remediation="Create a VerificationPolicy with a resourcePattern covering this bundle's registry.",
+                    extra={"task_name": pt.name, "bundle": bundle},
+                ))
     return findings

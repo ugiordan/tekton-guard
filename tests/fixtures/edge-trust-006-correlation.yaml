@@ -1,0 +1,26 @@
+apiVersion: tekton.dev/v1alpha1
+kind: VerificationPolicy
+metadata:
+  name: my-policy
+spec:
+  resources:
+  - resourcePattern: "^quay.io/opendatahub/.*$"
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: pipeline-with-bundles
+spec:
+  tasks:
+  - name: covered-task
+    taskRef:
+      resolver: bundles
+      params:
+      - name: bundle
+        value: quay.io/opendatahub/my-task:v1
+  - name: uncovered-task
+    taskRef:
+      resolver: bundles
+      params:
+      - name: bundle
+        value: quay.io/untrusted/evil-task:latest

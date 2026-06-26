@@ -80,8 +80,21 @@ def check_logic_003(resource: TektonResource, config: ScannerConfig) -> list[dic
     for pt in resource.pipeline_tasks:
         task_run_after[pt.name] = set(pt.run_after)
         for ws in pt.workspaces:
-            ws_name = ws.workspace or ws.name
+            ws_name = ws.workspace
+            if not ws_name:
+                continue  # task-local workspace binding without pipeline workspace ref
             workspace_users.setdefault(ws_name, []).append(pt.name)
+
+    # Build transitive dependency closure
+    def _transitive_deps(task_name: str, visited: set | None = None) -> set:
+        if visited is None:
+            visited = set()
+        if task_name in visited:
+            return visited
+        visited.add(task_name)
+        for dep in task_run_after.get(task_name, set()):
+            _transitive_deps(dep, visited)
+        return visited
 
     # For each shared workspace, check if any untrusted task can run in parallel
     for ws_name, task_names in workspace_users.items():
@@ -90,11 +103,11 @@ def check_logic_003(resource: TektonResource, config: ScannerConfig) -> list[dic
 
         for i, t1 in enumerate(task_names):
             for t2 in task_names[i+1:]:
-                # Check if t1 and t2 can run in parallel (neither depends on the other)
-                t1_deps = task_run_after.get(t1, set())
-                t2_deps = task_run_after.get(t2, set())
-                if t2 in t1_deps or t1 in t2_deps:
-                    continue  # ordered, not parallel
+                # Check if t1 and t2 can run in parallel (neither depends on the other transitively)
+                t1_all_deps = _transitive_deps(t1)
+                t2_all_deps = _transitive_deps(t2)
+                if t2 in t1_all_deps or t1 in t2_all_deps:
+                    continue  # transitively ordered
 
                 # Check if either is untrusted
                 t1_pt = next((pt for pt in resource.pipeline_tasks if pt.name == t1), None)

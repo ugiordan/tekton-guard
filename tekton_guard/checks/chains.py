@@ -70,6 +70,11 @@ def check_chain_003(resource: TektonResource, config: ScannerConfig) -> list[dic
         if not pattern:
             continue
         if not pattern.startswith("^") or not pattern.endswith("$"):
+            anchored = pattern
+            if not anchored.startswith("^"):
+                anchored = "^" + anchored
+            if not anchored.endswith("$"):
+                anchored = anchored + "$"
             findings.append(_finding(
                 "TKN-CHAIN-003", "HIGH", f"VerificationPolicy with unanchored regex: {pattern}",
                 resource, resource.line_offset,
@@ -77,7 +82,7 @@ def check_chain_003(resource: TektonResource, config: ScannerConfig) -> list[dic
                 f"without ^ and $ anchors. Unanchored patterns can match unintended "
                 f"resources (CVE-2026-25542).",
                 cwe="CWE-185",
-                remediation=f"Anchor the pattern: ^{pattern}$",
+                remediation=f"Anchor the pattern: {anchored}",
                 extra={"pattern": pattern},
             ))
     return findings
@@ -85,7 +90,12 @@ def check_chain_003(resource: TektonResource, config: ScannerConfig) -> list[dic
 
 @register_check
 def check_chain_004(resource: TektonResource, config: ScannerConfig) -> list[dict]:
-    """TKN-CHAIN-004: Chains-consumed result from untrusted task."""
+    """TKN-CHAIN-004: Chains-consumed result from untrusted task.
+
+    Note: this check may fire alongside TKN-TRUST-002 on the same task.
+    This is expected (different risk dimensions: TRUST-002 flags the untrusted
+    source, CHAIN-004 flags the supply chain attestation poisoning risk).
+    """
     if resource.kind != "Pipeline":
         return []
     findings = []
@@ -103,12 +113,13 @@ def check_chain_004(resource: TektonResource, config: ScannerConfig) -> list[dic
         # Check if task name suggests it produces Chains-consumed results
         name_lower = pt.name.lower()
         if any(kw in name_lower for kw in ("build", "push", "image", "container")):
+            url_info = ref.url if ref.resolver_type == "git" else ref.params.get("name", ref.params.get("catalog", "hub"))
             findings.append(_finding(
                 "TKN-CHAIN-004", "HIGH",
                 "Chains-consumed result from untrusted task",
                 resource, ref.line,
                 f"Pipeline task '{pt.name}' appears to produce build/image results "
-                f"but is from an untrusted source ({ref.resolver_type}: {ref.url}). "
+                f"but is from an untrusted source ({ref.resolver_type}: {url_info}). "
                 f"A compromised task can poison Chains attestation.",
                 cwe="CWE-345",
                 remediation="Use trusted, pinned sources for all tasks that produce IMAGE_URL/IMAGE_DIGEST results.",

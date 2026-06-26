@@ -39,6 +39,7 @@ class TestVerificationPolicy:
         chain003 = [f for f in findings if f["rule_id"] == "TKN-CHAIN-003"]
         partial = [f for f in chain003 if "quay.io" in f.get("pattern", "")]
         assert len(partial) == 1
+        assert partial[0]["pattern"] == "^quay.io/my-org/"
 
 
 class TestChainDeep:
@@ -136,6 +137,26 @@ class TestTriggerDeep:
         trig007 = [f for f in findings if f["rule_id"] == "TKN-TRIG-007"
                    and f["resource_name"] == "listener-with-interceptor"]
         assert len(trig007) == 0
+
+
+class TestTrustCorrelation:
+    def test_uncovered_bundle_flagged(self):
+        findings = _run("edge-trust-006-correlation.yaml")
+        trust006 = [f for f in findings if f["rule_id"] == "TKN-TRUST-006"]
+        assert len(trust006) == 1
+        assert "untrusted" in trust006[0].get("bundle", "")
+
+    def test_covered_bundle_clean(self):
+        findings = _run("edge-trust-006-correlation.yaml")
+        trust006 = [f for f in findings if f["rule_id"] == "TKN-TRUST-006"
+                   and f.get("task_name", "") == "covered-task"]
+        assert len(trust006) == 0
+
+    def test_no_policies_no_findings(self):
+        """When no VerificationPolicy exists, TRUST-006 produces zero findings."""
+        findings = _run("pipeline-with-tasks.yaml")
+        trust006 = [f for f in findings if f["rule_id"] == "TKN-TRUST-006"]
+        assert len(trust006) == 0
 
 
 class TestPipelineLogic:

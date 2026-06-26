@@ -123,6 +123,20 @@ def check_trig_003(resource: TektonResource, config: ScannerConfig) -> list[dict
     return findings
 
 
+def _find_interpolations(data, pattern):
+    """Recursively search dict/list/str for regex pattern matches."""
+    matches = []
+    if isinstance(data, str):
+        matches.extend(pattern.findall(data))
+    elif isinstance(data, dict):
+        for v in data.values():
+            matches.extend(_find_interpolations(v, pattern))
+    elif isinstance(data, list):
+        for item in data:
+            matches.extend(_find_interpolations(item, pattern))
+    return matches
+
+
 @register_check
 def check_trig_004(resource: TektonResource, config: ScannerConfig) -> list[dict]:
     """TKN-TRIG-004: TriggerTemplate param injection."""
@@ -134,8 +148,7 @@ def check_trig_004(resource: TektonResource, config: ScannerConfig) -> list[dict
     for tmpl in templates or []:
         if not isinstance(tmpl, dict):
             continue
-        tmpl_str = str(tmpl)
-        matches = tt_param_re.findall(tmpl_str)
+        matches = _find_interpolations(tmpl, tt_param_re)
         if matches:
             findings.append(_finding(
                 "TKN-TRIG-004", "HIGH", "TriggerTemplate param injection",
@@ -192,7 +205,9 @@ def check_trig_006(resource: TektonResource, config: ScannerConfig) -> list[dict
             "TKN-TRIG-006", "MEDIUM", "PaC Repository allows all branches",
             resource, resource.line_offset,
             f"PaC Repository '{resource.name}' has no incoming webhook restrictions. "
-            f"Any branch push or PR can trigger pipeline execution.",
+            f"Any branch push or PR can trigger pipeline execution. "
+            f"Note: PipelineRun-level on-cel-expression filters may provide "
+            f"additional branch restrictions not visible at the Repository CR level.",
             cwe="CWE-284",
             remediation="Add incoming rules to restrict which branches and events trigger pipelines.",
         )]
