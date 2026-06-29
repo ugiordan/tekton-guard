@@ -22,6 +22,7 @@ def _category_from_rule(rule_id: str) -> str:
         "TRIG": "trigger_security",
         "LIMIT": "resource_limits",
         "EXFIL": "exfiltration",
+        "LOGIC": "pipeline_logic",
     }.get(prefix, "unknown")
 
 
