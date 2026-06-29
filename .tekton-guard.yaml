@@ -20,3 +20,16 @@ min_severity: "LOW"
 # PipelinesAsCode's git-auth workspace is standard and safe to suppress.
 known_safe_secret_workspaces:
   - "git-auth"
+
+# PaC params that are safe to pass through (go to structured task inputs,
+# not injected into scripts). Suppresses TKN-RES-003 for these params.
+known_safe_pac_params:
+  - "git-url"
+  - "revision"
+  - "output-image"
+  - "dockerfile"
+  - "path-context"
+  - "build-platforms"
+  - "image-expires-after"
+  - "build-version-tag"
+  - "pipeline-type"

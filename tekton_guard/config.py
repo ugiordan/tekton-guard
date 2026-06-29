@@ -45,6 +45,12 @@ class ScannerConfig:
         "git-auth",
     ])
 
+    known_safe_pac_params: list[str] = field(default_factory=lambda: [
+        "git-url", "revision", "output-image", "dockerfile",
+        "path-context", "build-platforms", "image-expires-after",
+        "build-version-tag", "pipeline-type",
+    ])
+
     def is_trusted_git_source(self, url: str) -> bool:
         if not url:
             return False
@@ -94,5 +100,7 @@ def load_config(config_path: str | Path | None = None) -> ScannerConfig:
         kwargs["security_task_patterns"] = data["security_task_patterns"]
     if "shared_namespaces" in data:
         kwargs["shared_namespaces"] = data["shared_namespaces"]
+    if "known_safe_pac_params" in data:
+        kwargs["known_safe_pac_params"] = data["known_safe_pac_params"]
 
     return ScannerConfig(**kwargs)

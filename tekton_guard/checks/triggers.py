@@ -74,7 +74,7 @@ def check_trig_002(resource: TektonResource, config: ScannerConfig) -> list[dict
         on_target = resource.annotations.get("pipelinesascode.tekton.dev/on-target-branch", "")
         if not on_target:
             findings.append(_finding(
-                "TKN-TRIG-002", "MEDIUM", "Comment trigger without branch restriction",
+                "TKN-TRIG-002", "LOW", "Comment trigger without branch restriction",
                 resource, resource.line_offset,
                 f"PipelineRun '{resource.name}' has a comment trigger (on-comment: '{on_comment}') "
                 f"without on-target-branch restriction.",

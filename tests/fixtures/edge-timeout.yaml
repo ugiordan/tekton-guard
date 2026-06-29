@@ -7,7 +7,7 @@ metadata:
 spec:
   timeouts:
     pipeline: 6h0m0s
-    tasks: 3h
+    tasks: 4h
   pipelineRef:
     resolver: git
     params:

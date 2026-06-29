@@ -79,10 +79,18 @@ class TestPaCTaint:
     def test_pac_tainted_params_flagged(self):
         findings = _run("edge-pac-taint.yaml")
         res003 = [f for f in findings if f["rule_id"] == "TKN-RES-003"]
-        assert len(res003) >= 2  # git-url and revision
+        assert len(res003) >= 2  # custom-label and deploy-target (non-safe params)
         param_names = [f["param_name"] for f in res003]
-        assert "git-url" in param_names
-        assert "revision" in param_names
+        assert "custom-label" in param_names
+        assert "deploy-target" in param_names
+
+    def test_safe_pac_params_not_flagged(self):
+        """Standard Konflux params (git-url, revision) are in known_safe_pac_params."""
+        findings = _run("edge-pac-taint.yaml")
+        res003 = [f for f in findings if f["rule_id"] == "TKN-RES-003"]
+        param_names = [f["param_name"] for f in res003]
+        assert "git-url" not in param_names
+        assert "revision" not in param_names
 
     def test_hardcoded_param_not_flagged(self):
         findings = _run("edge-pac-taint.yaml")

@@ -84,7 +84,8 @@ def check_res_003(resource: TektonResource, config: ScannerConfig) -> list[dict]
         if not matches:
             continue
         param_name = param.get("name", "unknown")
-        # Use index-offset line so dedup doesn't collapse multiple param findings
+        if param_name in config.known_safe_pac_params:
+            continue
         param_line = resource.line_offset + idx + 1
         findings.append(_finding(
             "TKN-RES-003", "MEDIUM",

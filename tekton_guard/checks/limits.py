@@ -82,14 +82,14 @@ def check_limit_002(resource: TektonResource, config: ScannerConfig) -> list[dic
 
     if tasks_timeout:
         hours = _parse_duration_hours(str(tasks_timeout))
-        if hours > 2:
+        if hours > 3:
             findings.append(_finding(
                 "TKN-LIMIT-002", "LOW", "Excessive task timeout",
                 resource, resource.line_offset,
                 f"PipelineRun '{resource.name}' has a tasks timeout of '{tasks_timeout}' "
-                f"(>{2}h). Long task timeouts increase the attack window.",
+                f"(>{3}h). Long task timeouts increase the attack window.",
                 cwe="CWE-400",
-                remediation="Reduce task timeout to 2 hours or less.",
+                remediation="Reduce task timeout to 3 hours or less.",
                 extra={"timeout_type": "tasks", "timeout_value": str(tasks_timeout), "timeout_hours": hours},
             ))
     return findings

@@ -13,6 +13,10 @@ spec:
     value: '{{ source_url }}'
   - name: revision
     value: '{{ revision }}'
+  - name: custom-label
+    value: '{{ source_url }}'
+  - name: deploy-target
+    value: '{{ target_branch }}'
   - name: safe-param
     value: "hardcoded-value"
   pipelineRef:
