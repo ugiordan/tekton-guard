@@ -58,6 +58,14 @@ tekton-guard [OPTIONS] TARGET
 | **`--resolve`** | Follow git resolver URLs to fetch and scan remote Pipeline/Task definitions | false |
 | **`--resolve-method`** | Resolution method: `api` (HTTP, fast, public repos) or `clone` (git, works with tokens) | `api` |
 
+### Verification
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| **`--verify-pins`** | Check if pinned SHAs are stale (no longer match branch HEAD). Requires `GITHUB_TOKEN`. | false |
+
+`--verify-pins` iterates all pinned git references and checks whether the SHA still matches the HEAD of the referenced branch via the GitHub API. Useful for detecting refs that are pinned but lagging behind upstream.
+
 ### Dependency Graph
 
 | Flag | Description | Default |
@@ -122,4 +130,7 @@ The graph output shows repos as nodes and git resolver references as edges, usef
 
     # Generate dependency graph
     tekton-guard /path/to/repo --graph deps.json --resolve
+
+    # Check if pinned SHAs are stale
+    GITHUB_TOKEN=ghp_... tekton-guard /path/to/repo --verify-pins
     ```

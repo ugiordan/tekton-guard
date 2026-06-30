@@ -86,6 +86,59 @@ known_safe_secret_workspaces:
 
 The `git-auth` workspace is suppressed by default.
 
+## Security Task Patterns
+
+Define which task names are considered security-relevant. These patterns are used by TKN-TRIG-003 (conditional skip), TKN-LOGIC-001 (not in finally), TKN-LOGIC-005 (onError continue), TKN-LOGIC-007 (retries), and TKN-CHAIN-005 (missing SBOM).
+
+```yaml
+security_task_patterns:
+  - "scan"
+  - "sign"
+  - "verify"
+  - "attest"
+  - "cosign"
+  - "enterprise-contract"
+  - "sast"
+  - "clair"
+  - "clamav"
+  - "sbom"
+  - "syft"
+  - "cyclonedx"
+```
+
+The default list covers common Konflux and OpenShift Pipelines security task naming conventions. Add your own patterns if you use different names.
+
+## Shared Namespaces
+
+Namespaces considered shared for TKN-TRUST-005 (cluster resolver in shared namespace):
+
+```yaml
+shared_namespaces:
+  - "tekton-pipelines"
+  - "openshift-pipelines"
+```
+
+Tasks referenced via `cluster` resolver in these namespaces will trigger a finding, since any user with Task create permission in the namespace can replace them.
+
+## Known-Safe PaC Params
+
+Suppress TKN-RES-003 for PipelinesAsCode parameter names that are known-safe (e.g., they are validated or don't reach script injection points):
+
+```yaml
+known_safe_pac_params:
+  - "git-url"
+  - "revision"
+  - "output-image"
+  - "dockerfile"
+  - "path-context"
+  - "build-platforms"
+  - "image-expires-after"
+  - "build-version-tag"
+  - "pipeline-type"
+```
+
+The default list covers standard Konflux PaC parameter names.
+
 ## Default Trust Lists
 
 When no config file is provided, tekton-guard uses these defaults:

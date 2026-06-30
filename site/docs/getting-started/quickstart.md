@@ -126,5 +126,5 @@ See [Configuration](../guides/configuration.md) for config file format.
 !!! info "What's next?"
     - **[CI Integration](../guides/ci-integration.md)** - Set up automated scanning in GitHub Actions
     - **[Configuration](../guides/configuration.md)** - Customize trust lists and check behavior
-    - **[Detection Rules](../reference/rules.md)** - Understand all 27 security checks
+    - **[Detection Rules](../reference/rules.md)** - Understand all 48 security checks
     - **[False Positive Tuning](../guides/false-positives.md)** - Handle PaC templates and baselines

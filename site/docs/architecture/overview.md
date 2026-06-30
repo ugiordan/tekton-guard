@@ -8,20 +8,21 @@ tekton_guard/
 ├── cli.py              # CLI entry point, argparse
 ├── parser.py           # YAML parser with ruamel.yaml, PaC template handling
 ├── config.py           # Trust lists, check settings
-├── checks/             # Security checks (27 checks across 11 categories)
+├── checks/             # Security checks (48 checks across 12 categories)
 │   ├── __init__.py     # Auto-discovery registry, run_checks()
 │   ├── _common.py      # @register_check decorator, shared helpers
 │   ├── pinning.py      # TKN-PIN-001..005
-│   ├── trust.py        # TKN-TRUST-001..003
+│   ├── trust.py        # TKN-TRUST-001..006
 │   ├── service_account.py  # TKN-SA-001..002
 │   ├── workspace.py    # TKN-WS-001..002
 │   ├── result_injection.py # TKN-RES-001..003
 │   ├── security.py     # TKN-SEC-001..002
 │   ├── volumes.py      # TKN-VOL-001..002
-│   ├── triggers.py     # TKN-TRIG-001..003
+│   ├── triggers.py     # TKN-TRIG-001..009
 │   ├── exfiltration.py # TKN-EXFIL-001..002
 │   ├── limits.py       # TKN-LIMIT-002
-│   └── chains.py       # TKN-CHAIN-001..002
+│   ├── chains.py       # TKN-CHAIN-001..006
+│   └── logic.py        # TKN-LOGIC-001..007
 ├── formatter.py        # JSON, SARIF, text output
 ├── resolver.py         # Cross-repo git resolver (--resolve)
 ├── fixer.py            # Auto-fix engine (--fix, --fix-dry-run)
@@ -44,19 +45,20 @@ graph TB
         LOAD --> EXTRACT
     end
     
-    subgraph Checks["27 Security Checks"]
+    subgraph Checks["48 Security Checks"]
         direction LR
         PIN["Pinning<br/>5 checks"]
-        TRUST["Trust<br/>3 checks"]
+        TRUST["Trust<br/>6 checks"]
         SEC["Security<br/>2 checks"]
         VOL["Volumes<br/>2 checks"]
-        TRIG["Triggers<br/>3 checks"]
+        TRIG["Triggers<br/>9 checks"]
         SA["SA<br/>2 checks"]
         WS["Workspace<br/>2 checks"]
         RES["Injection<br/>3 checks"]
         EXFIL["Exfiltration<br/>2 checks"]
         LIMIT["Limits<br/>1 check"]
-        CHAIN["Chains<br/>2 checks"]
+        CHAIN["Chains<br/>6 checks"]
+        LOGIC["Logic<br/>7 checks"]
     end
     
     subgraph Output
@@ -91,7 +93,7 @@ graph TB
 
 Uses `ruamel.yaml` for YAML parsing with native line number tracking. Handles multi-document YAML and PipelinesAsCode template variables (`{{ }}`) via a parse-then-fallback strategy with UUID-based placeholders.
 
-Parses these Tekton CRD kinds: `PipelineRun`, `Pipeline`, `Task`, `TaskRun`, `StepAction`.
+Parses these Tekton CRD kinds: `PipelineRun`, `Pipeline`, `Task`, `TaskRun`, `StepAction`, `TriggerTemplate`, `TriggerBinding`, `EventListener`, `Repository`, `VerificationPolicy`.
 
 ## Checks
 
