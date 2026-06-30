@@ -1,4 +1,4 @@
-"""Chains readiness checks (TKN-CHAIN-001..002)."""
+"""Chains readiness checks (TKN-CHAIN-001..006)."""
 
 from __future__ import annotations
 
@@ -157,3 +157,37 @@ def check_chain_005(resource: TektonResource, config: ScannerConfig) -> list[dic
         cwe="CWE-1059",
         remediation="Add an SBOM generation task to the build pipeline.",
     )]
+
+
+@register_check
+def check_chain_006(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-CHAIN-006: Chains result producer with onError continue."""
+    if resource.kind != "Pipeline":
+        return []
+    findings = []
+    chains_result_names = {"IMAGE_URL", "IMAGE_DIGEST", "CHAINS-GIT_URL", "CHAINS-GIT_COMMIT"}
+    raw_tasks = resource.raw.get("spec", {}).get("tasks", [])
+    for task_data in (raw_tasks or []):
+        name = str(task_data.get("name", ""))
+        on_error = str(task_data.get("onError", "")).lower()
+        if on_error != "continue":
+            continue
+        # Check if this task produces Chains-consumed results
+        task_spec = task_data.get("taskSpec", {})
+        if task_spec:
+            results = task_spec.get("results", [])
+            for r in results or []:
+                if str(r.get("name", "")) in chains_result_names:
+                    findings.append(_finding(
+                        "TKN-CHAIN-006", "HIGH",
+                        "Chains result producer with onError continue",
+                        resource, resource.line_offset,
+                        f"Task '{name}' produces Chains-consumed results but has "
+                        f"onError: continue. If the task fails, Chains may sign "
+                        f"invalid or incomplete attestation data.",
+                        cwe="CWE-345",
+                        remediation="Remove onError: continue from tasks that produce IMAGE_URL/IMAGE_DIGEST results.",
+                        extra={"task_name": name},
+                    ))
+                    break
+    return findings

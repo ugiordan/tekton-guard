@@ -1,0 +1,74 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: onerror-security-pipeline
+spec:
+  tasks:
+  - name: sast-scan
+    onError: continue
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  - name: build
+    retries: 3
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  - name: clair-scan
+    retries: 2
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: parameterized-image-task
+spec:
+  params:
+  - name: builder-image
+    type: string
+  steps:
+  - name: build
+    image: $(params.builder-image)
+    script: |
+      echo "building"
+  - name: test
+    image: registry.access.redhat.com/ubi9/ubi@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    script: |
+      echo "testing"
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: sensitive-binding
+spec:
+  params:
+  - name: git-token
+    value: $(body.repository.token)
+  - name: repo-url
+    value: $(body.repository.url)
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: no-tls-listener
+spec:
+  triggers:
+  - name: pr-trigger
+    bindings:
+    - ref: sensitive-binding
+    template:
+      ref: my-template

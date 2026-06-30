@@ -1,4 +1,4 @@
-"""Pipeline logic checks (TKN-LOGIC-001..004)."""
+"""Pipeline logic checks (TKN-LOGIC-001..007)."""
 
 from __future__ import annotations
 
@@ -157,3 +157,99 @@ def check_logic_004(resource: TektonResource, config: ScannerConfig) -> list[dic
         cwe="CWE-390",
         remediation="Add a finally block with at minimum a status-reporting task.",
     )]
+
+
+@register_check
+def check_logic_005(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-LOGIC-005: Security task with onError continue."""
+    if resource.kind != "Pipeline":
+        return []
+    findings = []
+    patterns = config.security_task_patterns
+    for pt in resource.pipeline_tasks + resource.finally_tasks:
+        name_lower = pt.name.lower()
+        is_security = any(pat in name_lower for pat in patterns)
+        if not is_security and pt.task_ref and pt.task_ref.name:
+            is_security = any(pat in pt.task_ref.name.lower() for pat in patterns)
+        if not is_security:
+            continue
+        # Check raw data for onError field
+        raw_tasks = resource.raw.get("spec", {}).get("tasks", [])
+        raw_finally = resource.raw.get("spec", {}).get("finally", [])
+        for task_data in (raw_tasks or []) + (raw_finally or []):
+            if str(task_data.get("name", "")) != pt.name:
+                continue
+            on_error = str(task_data.get("onError", "")).lower()
+            if on_error == "continue":
+                findings.append(_finding(
+                    "TKN-LOGIC-005", "HIGH",
+                    "Security task with onError continue",
+                    resource, pt.line,
+                    f"Security task '{pt.name}' has onError: continue. Security task "
+                    f"failures will be silently ignored, allowing compromised builds "
+                    f"to pass without detection.",
+                    cwe="CWE-390",
+                    remediation="Remove onError: continue from security tasks. Failures should block the pipeline.",
+                    extra={"task_name": pt.name},
+                ))
+    return findings
+
+
+@register_check
+def check_logic_006(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-LOGIC-006: Parameterized step image."""
+    if resource.kind not in ("Task", "StepAction"):
+        return []
+    findings = []
+    for step in resource.steps + resource.sidecars:
+        img = step.image
+        if not img:
+            continue
+        if "$(params." in img or "$(inputs." in img:
+            findings.append(_finding(
+                "TKN-LOGIC-006", "HIGH",
+                "Parameterized step image",
+                resource, step.image_line,
+                f"Step '{step.name}' uses a parameterized image: '{img}'. "
+                f"A PipelineRun caller can override this parameter to run "
+                f"arbitrary code in the build environment.",
+                cwe="CWE-94",
+                remediation="Hardcode step images or validate the parameter against an allowlist.",
+                extra={"step_name": step.name, "image_value": img},
+            ))
+    return findings
+
+
+@register_check
+def check_logic_007(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-LOGIC-007: Retries on security task."""
+    if resource.kind != "Pipeline":
+        return []
+    findings = []
+    patterns = config.security_task_patterns
+    raw_tasks = resource.raw.get("spec", {}).get("tasks", [])
+    raw_finally = resource.raw.get("spec", {}).get("finally", [])
+    for task_data in (raw_tasks or []) + (raw_finally or []):
+        name = str(task_data.get("name", ""))
+        retries = task_data.get("retries", 0)
+        if not retries or int(retries) < 1:
+            continue
+        name_lower = name.lower()
+        is_security = any(pat in name_lower for pat in patterns)
+        if not is_security:
+            task_ref = task_data.get("taskRef", {})
+            ref_name = str(task_ref.get("name", ""))
+            is_security = any(pat in ref_name.lower() for pat in patterns)
+        if is_security:
+            findings.append(_finding(
+                "TKN-LOGIC-007", "MEDIUM",
+                "Retries on security task",
+                resource, resource.line_offset,
+                f"Security task '{name}' has retries: {retries}. Retrying security "
+                f"scans can mask intermittent failures or allow flaky security checks "
+                f"to eventually pass.",
+                cwe="CWE-693",
+                remediation="Remove retries from security tasks. Security checks should fail deterministically.",
+                extra={"task_name": name, "retries": int(retries)},
+            ))
+    return findings

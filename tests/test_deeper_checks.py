@@ -185,3 +185,46 @@ class TestPipelineLogic:
                     and f["resource_name"] == "parallel-untrusted-workspace"]
         assert len(logic003) >= 1
         assert logic003[0]["untrusted"] == "untrusted-scan"
+
+
+class TestDeeperLogic:
+    def test_onerror_continue_security_task(self):
+        findings = _run("edge-deeper-logic.yaml")
+        logic005 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-005"]
+        assert len(logic005) == 1
+        assert logic005[0]["task_name"] == "sast-scan"
+
+    def test_parameterized_image_flagged(self):
+        findings = _run("edge-deeper-logic.yaml")
+        logic006 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-006"]
+        assert len(logic006) == 1
+        assert "builder-image" in logic006[0]["image_value"]
+
+    def test_fixed_image_not_flagged(self):
+        findings = _run("edge-deeper-logic.yaml")
+        logic006 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-006"
+                    and f.get("step_name") == "test"]
+        assert len(logic006) == 0
+
+    def test_retries_security_task_flagged(self):
+        findings = _run("edge-deeper-logic.yaml")
+        logic007 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-007"]
+        assert len(logic007) == 1
+        assert logic007[0]["task_name"] == "clair-scan"
+
+    def test_retries_nonsecurity_task_clean(self):
+        findings = _run("edge-deeper-logic.yaml")
+        logic007 = [f for f in findings if f["rule_id"] == "TKN-LOGIC-007"
+                    and f.get("task_name") == "build"]
+        assert len(logic007) == 0
+
+    def test_sensitive_triggerbinding(self):
+        findings = _run("edge-deeper-logic.yaml")
+        trig008 = [f for f in findings if f["rule_id"] == "TKN-TRIG-008"]
+        assert len(trig008) == 1
+        assert "token" in trig008[0]["param_name"].lower()
+
+    def test_eventlistener_no_tls(self):
+        findings = _run("edge-deeper-logic.yaml")
+        trig009 = [f for f in findings if f["rule_id"] == "TKN-TRIG-009"]
+        assert len(trig009) == 1

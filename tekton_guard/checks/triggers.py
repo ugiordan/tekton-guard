@@ -1,4 +1,4 @@
-"""Trigger security checks (TKN-TRIG-001..007)."""
+"""Trigger security checks (TKN-TRIG-001..009)."""
 
 from __future__ import annotations
 
@@ -231,4 +231,58 @@ def check_trig_007(resource: TektonResource, config: ScannerConfig) -> list[dict
         f"a dedicated SA with minimal permissions.",
         cwe="CWE-269",
         remediation="Set serviceAccountName to a dedicated SA with only PipelineRun create permission.",
+    )]
+
+
+@register_check
+def check_trig_008(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRIG-008: TriggerBinding extracts sensitive webhook fields."""
+    if resource.kind != "TriggerBinding":
+        return []
+    findings = []
+    sensitive_patterns = ["secret", "token", "password", "credential", "key", "auth"]
+    raw_params = resource.raw.get("spec", {}).get("params", [])
+    for param in raw_params:
+        if not isinstance(param, dict):
+            continue
+        name = str(param.get("name", "")).lower()
+        value = str(param.get("value", "")).lower()
+        if any(pat in name or pat in value for pat in sensitive_patterns):
+            findings.append(_finding(
+                "TKN-TRIG-008", "MEDIUM",
+                "TriggerBinding extracts sensitive webhook fields",
+                resource, resource.line_offset,
+                f"TriggerBinding '{resource.name}' extracts param '{param.get('name', '')}' "
+                f"which appears to contain sensitive data. Webhook body fields passed "
+                f"through TriggerBinding are logged in PipelineRun params and may be "
+                f"visible in cluster events.",
+                cwe="CWE-200",
+                remediation="Use Tekton Interceptors to extract and validate sensitive fields before they reach TriggerBinding params.",
+                extra={"param_name": param.get("name", ""), "param_value": param.get("value", "")},
+            ))
+    return findings
+
+
+@register_check
+def check_trig_009(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRIG-009: EventListener without TLS."""
+    if resource.kind != "EventListener":
+        return []
+    raw_spec = resource.raw.get("spec", {})
+    # Check for TLS configuration
+    resources_spec = raw_spec.get("resources", {})
+    if isinstance(resources_spec, dict):
+        custom_resource = resources_spec.get("kubernetesResource", {})
+        if isinstance(custom_resource, dict):
+            tls = custom_resource.get("spec", {}).get("tls", {})
+            if tls:
+                return []
+    return [_finding(
+        "TKN-TRIG-009", "LOW",
+        "EventListener without TLS",
+        resource, resource.line_offset,
+        f"EventListener '{resource.name}' has no TLS configuration. Webhook "
+        f"payloads including authentication tokens are transmitted in plaintext.",
+        cwe="CWE-319",
+        remediation="Configure TLS on the EventListener or terminate TLS at the ingress/route level.",
     )]
