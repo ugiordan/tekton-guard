@@ -153,6 +153,11 @@ def main(argv: list[str] | None = None) -> int:
         default=False,
         help="Check if pinned SHAs are stale (no longer match branch HEAD). Requires GITHUB_TOKEN.",
     )
+    parser.add_argument(
+        "--policy-dir",
+        default=None,
+        help="Directory containing VerificationPolicy YAML files (for TKN-TRUST-006).",
+    )
 
     args = parser.parse_args(argv)
 
@@ -168,6 +173,13 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(f"Error: '{args.target}' is not a valid file or directory", file=sys.stderr)
         return 2
+
+    if args.policy_dir:
+        policy_path = Path(args.policy_dir)
+        if policy_path.is_dir():
+            for p in sorted(policy_path.glob("*.yaml")) + sorted(policy_path.glob("*.yml")):
+                resources.extend(parse_file(p))
+            print(f"Loaded policy files from {args.policy_dir}", file=sys.stderr)
 
     if args.diff_base:
         import subprocess

@@ -1,26 +1,32 @@
 # tekton-guard
 
-Security scanner for Tekton pipeline definitions. Catches supply chain risks that pattern-matching tools (semgrep, kube-linter) can't: transitive reference chains, resolver trust classification, cross-resource data flow analysis.
+Security scanner for Tekton pipeline definitions. Catches supply chain risks that pattern-matching tools (semgrep, kube-linter) can't detect: transitive reference chains, resolver trust classification, cross-resource data flow analysis, trigger injection, pipeline logic manipulation.
 
-No dedicated Tekton security scanner existed before this tool. The industry invested in GitHub Actions security (Zizmor, StepSecurity, Scorecard) but nothing equivalent for Tekton, despite it being the CNCF-standard pipeline engine and the foundation of Red Hat's build infrastructure (Konflux, OpenShift Pipelines).
+No dedicated Tekton security scanner existed before this tool.
 
 ## What it checks
 
-16 checks across 6 categories:
+48 checks across 12 categories:
 
 | Category | Checks | What it catches |
 |----------|--------|-----------------|
 | **Pinning** | TKN-PIN-001..005 | Mutable pipeline/task/StepAction refs, unpinned bundles, mutable step images |
-| **Trust** | TKN-TRUST-001..003 | Untrusted git/hub sources, unverified cluster tasks |
+| **Trust** | TKN-TRUST-001..006 | Untrusted git/hub sources, cluster resolver in shared namespace, HTTP resolver without digest, bundle without VerificationPolicy |
 | **ServiceAccount** | TKN-SA-001..002 | Default or missing SA on PipelineRuns |
 | **Workspace** | TKN-WS-001..002 | Secret workspaces without readOnly, shared workspaces with untrusted tasks |
-| **Result Injection** | TKN-RES-001..002 | Param/result interpolation in scripts and args (CWE-94) |
-| **Chains Readiness** | TKN-CHAIN-001..002 | Missing provenance annotations on build pipelines |
+| **Result Injection** | TKN-RES-001..003 | Script/args interpolation injection, PaC parameter taint |
+| **Security Context** | TKN-SEC-001..002 | Privileged containers, root user |
+| **Volume Mounts** | TKN-VOL-001..002 | Host path mounts, container runtime socket access |
+| **Trigger Security** | TKN-TRIG-001..009 | CEL injection, permissive triggers, TriggerTemplate injection, EventListener security, PaC Repository scope |
+| **Exfiltration** | TKN-EXFIL-001..002 | Secret access + network tools, network tool detection |
+| **Resource Limits** | TKN-LIMIT-001..002 | Missing resource requests, excessive timeouts |
+| **Chains Readiness** | TKN-CHAIN-001..006 | Provenance annotations, VerificationPolicy regex, result poisoning, SBOM |
+| **Pipeline Logic** | TKN-LOGIC-001..007 | Security task not in finally, onError:continue, parameterized images, TOCTOU, retries on security tasks |
 
 ## Install
 
 ```bash
-pip install .
+pip install git+https://github.com/ugiordan/tekton-guard.git
 ```
 
 Requires Python 3.10+ and `ruamel.yaml`.
@@ -35,10 +41,7 @@ tekton-guard /path/to/repo
 tekton-guard /path/to/repo --format text
 
 # SARIF output (for GitHub Code Scanning)
-tekton-guard /path/to/repo --format sarif
-
-# Scan a single file
-tekton-guard .tekton/push.yaml
+tekton-guard /path/to/repo --format sarif --output results.sarif
 
 # Use a config file with custom trust lists
 tekton-guard /path/to/repo --config .tekton-guard.yaml
@@ -46,56 +49,34 @@ tekton-guard /path/to/repo --config .tekton-guard.yaml
 # Follow git resolver URLs to scan remote Pipeline/Task definitions
 tekton-guard /path/to/repo --resolve
 
+# Auto-fix mutable refs (requires GITHUB_TOKEN)
+tekton-guard /path/to/repo --fix
+
 # Only fail on HIGH+ severity
 tekton-guard /path/to/repo --fail-on HIGH
 
-# Informational run (never fail)
-tekton-guard /path/to/repo --exit-zero
+# CI mode: diff-only scanning with baseline
+tekton-guard /path/to/repo --diff-base main --baseline .tekton-guard-baseline.json
+
+# Dependency graph with blast radius
+tekton-guard /path/to/repo --graph graph.json
+
+# Check if pinned SHAs are stale
+tekton-guard /path/to/repo --verify-pins
+
+# Include VerificationPolicy files for TRUST-006
+tekton-guard /path/to/repo --policy-dir /path/to/policies/
 ```
 
 ## Exit codes
 
 - `0`: no findings above threshold
 - `1`: findings above threshold
-- `2`: scanner error (bad path, parse failure)
+- `2`: scanner error
 
-## Configuration
+## Documentation
 
-Create a `.tekton-guard.yaml`:
-
-```yaml
-trusted_git_sources:
-  - "https://github.com/opendatahub-io/"
-  - "https://github.com/konflux-ci/"
-
-trusted_registries:
-  - "quay.io/konflux-ci/"
-  - "quay.io/redhat-appstudio/"
-
-skip_checks: []
-min_severity: "LOW"
-
-known_safe_secret_workspaces:
-  - "git-auth"
-```
-
-## False positive suppression
-
-Built-in suppression for PipelinesAsCode/Konflux patterns:
-- PaC template variables (`{{revision}}`, `{{source_url}}`) are recognized as runtime-pinned
-- AppStudio/Konflux pipelines with cluster-level Chains are not flagged for missing annotations
-- `git-auth` workspace is suppressed by default (standard PaC pattern)
-
-## Cross-repo resolution
-
-With `--resolve`, the scanner follows git resolver URLs to fetch and scan remote Pipeline/Task definitions:
-
-```bash
-$ tekton-guard /path/to/repo --resolve --format text
-Resolved 2 remote resource(s)
-[HIGH] TKN-PIN-002: remote:org/pipeline-repo@main/pipeline/build.yaml:161
-  Pipeline task 'init' references task via git resolver with mutable revision 'main'
-```
+Full docs at [ugiordan.github.io/tekton-guard](https://ugiordan.github.io/tekton-guard/)
 
 ## License
 
