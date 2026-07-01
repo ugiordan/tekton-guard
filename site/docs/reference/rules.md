@@ -11,7 +11,7 @@ graph TD
         TRIG001["TKN-TRIG-001<br/>CEL Injection"]
     end
     subgraph HIGH
-        PIN001["TKN-PIN-001..005<br/>Mutable Refs"]
+        PIN001["TKN-PIN-001..003,005<br/>Mutable Refs"]
         TRUST001["TKN-TRUST-001..002<br/>Untrusted Sources"]
         TRUST004["TKN-TRUST-004<br/>HTTP No Digest"]
         SEC001["TKN-SEC-001<br/>Privileged"]
@@ -25,6 +25,7 @@ graph TD
         LOGIC006["TKN-LOGIC-006<br/>Parameterized Image"]
     end
     subgraph MEDIUM
+        PIN004["TKN-PIN-004<br/>Mutable Step Image"]
         TRUST003["TKN-TRUST-003<br/>Cluster Task"]
         TRUST005["TKN-TRUST-005<br/>Shared Namespace"]
         TRUST006["TKN-TRUST-006<br/>No VP Coverage"]
@@ -46,7 +47,7 @@ graph TD
     subgraph LOW
         WS001["TKN-WS-001<br/>ReadOnly"]
         RES002["TKN-RES-002<br/>Args Interp"]
-        CHAIN001["TKN-CHAIN-001..002<br/>Chains Readiness"]
+        CHAIN001["TKN-CHAIN-001<br/>Chains Readiness"]
         CHAIN005["TKN-CHAIN-005<br/>No SBOM"]
         LIMIT002["TKN-LIMIT-002<br/>Timeout"]
         EXFIL002["TKN-EXFIL-002<br/>Net Tools"]
@@ -55,10 +56,15 @@ graph TD
         LOGIC004["TKN-LOGIC-004<br/>No Finally Block"]
     end
     
+    subgraph INFO
+        CHAIN002["TKN-CHAIN-002<br/>Missing Provenance Annotations"]
+    end
+    
     style CRITICAL fill:#d32f2f,color:#fff
     style HIGH fill:#f57c00,color:#fff
     style MEDIUM fill:#fbc02d,color:#000
     style LOW fill:#388e3c,color:#fff
+    style INFO fill:#1976d2,color:#fff
 ```
 
 ---
@@ -394,6 +400,17 @@ graph TD
 
 !!! tip "Attack window reduction"
     Long-running pipelines increase the window of opportunity for compromised tasks. Set reasonable timeouts to limit exposure.
+
+### TKN-LIMIT-001: Missing resource requests/limits
+- **Severity**: LOW
+- **CWE**: CWE-400
+- **Applies to**: Task, StepAction, Pipeline (inline taskSpec)
+- **Detect**: Steps or sidecars without `resources.requests` or `resources.limits`
+- **Risk**: Unbounded resource consumption can cause DoS or noisy-neighbor issues in shared build clusters
+- **Fix**: Add resources.requests and resources.limits to step specs
+
+!!! info "Disabled by default"
+    This check is in `skip_checks` by default because Konflux namespace LimitRange objects handle resource limits. Enable it by setting `skip_checks: []` in your config.
 
 ### TKN-LIMIT-002: Excessive timeout
 - **Severity**: LOW
