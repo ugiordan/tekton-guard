@@ -1,0 +1,3431 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://ugiordan.github.io/tekton-guard/reference/rules/">
+      
+      
+        <link rel="prev" href="../cli/">
+      
+      
+        <link rel="next" href="../output-formats/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Detection Rules - tekton-guard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Red+Hat+Text:300,300i,400,400i,700,700i%7CRed+Hat+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Red Hat Text";--md-code-font:"Red Hat Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/css/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#detection-rules" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="tekton-guard" class="md-header__button md-logo" aria-label="tekton-guard" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6 0 1.2.6 1.2 1.3v3.5c0 .6-.6 1.2-1.3 1.2H9.2c-.6 0-1.2-.6-1.2-1.3v-3.5c0-.6.6-1.2 1.2-1.2V9.5C9.2 8.1 10.6 7 12 7m0 1.2c-.8 0-1.5.5-1.5 1.3V11h3V9.5c0-.8-.7-1.3-1.5-1.3"></path></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            tekton-guard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Detection Rules
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard="" data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ugiordan/tekton-guard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    ugiordan/tekton-guard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/ci-integration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/setup/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="tekton-guard" class="md-nav__button md-logo" aria-label="tekton-guard" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6 0 1.2.6 1.2 1.3v3.5c0 .6-.6 1.2-1.3 1.2H9.2c-.6 0-1.2-.6-1.2-1.3v-3.5c0-.6.6-1.2 1.2-1.2V9.5C9.2 8.1 10.6 7 12 7m0 1.2c-.8 0-1.5.5-1.5 1.3V11h3V9.5c0-.8-.7-1.3-1.5-1.3"></path></svg>
+
+    </a>
+    tekton-guard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ugiordan/tekton-guard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    ugiordan/tekton-guard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3">
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/ci-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Understanding Findings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/false-positives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    False Positive Tuning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/cross-repo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Repo Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked="">
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Detection Rules
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Detection Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#check-categories-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Categories Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pinning-tkn-pin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pinning (TKN-PIN)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pinning (TKN-PIN)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-001-mutable-pipeline-revision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-001: Mutable pipeline revision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-002-mutable-task-reference-git-resolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-002: Mutable task reference (git resolver)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-003-unpinned-task-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-003: Unpinned task bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-004-mutable-step-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-004: Mutable step image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-005-mutable-stepaction-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-005: Mutable StepAction reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trust-tkn-trust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust (TKN-TRUST)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trust (TKN-TRUST)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-001-pipeline-from-untrusted-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-001: Pipeline from untrusted source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-002-task-from-untrusted-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-002: Task from untrusted source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-003-unverified-cluster-task-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-003: Unverified cluster task reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-004-http-resolver-without-digest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-004: HTTP resolver without digest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-005-cluster-resolver-in-shared-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-005: Cluster resolver in shared namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-006-bundle-without-verificationpolicy-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-006: Bundle without VerificationPolicy coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serviceaccount-tkn-sa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ServiceAccount (TKN-SA)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ServiceAccount (TKN-SA)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-sa-001-default-serviceaccount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-SA-001: Default ServiceAccount
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-sa-002-missing-serviceaccount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-SA-002: Missing ServiceAccount
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workspace-tkn-ws" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace (TKN-WS)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Workspace (TKN-WS)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-ws-001-secret-workspace-without-readonly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-WS-001: Secret workspace without readOnly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-ws-002-shared-workspace-with-untrusted-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-WS-002: Shared workspace with untrusted tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#result-injection-tkn-res" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Result Injection (TKN-RES)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Result Injection (TKN-RES)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-res-001-parameterresult-interpolation-in-script-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-RES-001: Parameter/result interpolation in script block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-res-002-parameter-interpolation-in-command-args" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-RES-002: Parameter interpolation in command args
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-res-003-pac-sourced-parameter-taint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-RES-003: PaC-sourced parameter taint
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-context-tkn-sec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Context (TKN-SEC)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Context (TKN-SEC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-sec-001-privileged-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-SEC-001: Privileged container
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-sec-002-root-user-or-privilege-escalation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-SEC-002: Root user or privilege escalation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volume-mounts-tkn-vol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volume Mounts (TKN-VOL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Volume Mounts (TKN-VOL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-vol-001-host-path-volume-mount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-VOL-001: Host path volume mount
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-vol-002-container-runtime-socket-mount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-VOL-002: Container runtime socket mount
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger-security-tkn-trig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger Security (TKN-TRIG)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trigger Security (TKN-TRIG)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-001-cel-expression-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-001: CEL expression injection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-002-overly-permissive-trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-002: Overly permissive trigger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-003-conditional-skip-of-security-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-003: Conditional skip of security tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-004-triggertemplate-param-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-004: TriggerTemplate param injection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-005-eventlistener-without-interceptor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-005: EventListener without interceptor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-006-pac-repository-allows-all-branches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-006: PaC Repository allows all branches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-007-eventlistener-with-defaultmissing-sa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-007: EventListener with default/missing SA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-008-triggerbinding-extracts-sensitive-webhook-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-008: TriggerBinding extracts sensitive webhook fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-009-eventlistener-without-tls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-009: EventListener without TLS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exfiltration-tkn-exfil" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exfiltration (TKN-EXFIL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exfiltration (TKN-EXFIL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-exfil-001-task-with-secret-access-and-network-capable-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-EXFIL-001: Task with secret access and network-capable scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-exfil-002-network-tool-in-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-EXFIL-002: Network tool in script
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resource-limits-tkn-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resource Limits (TKN-LIMIT)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource Limits (TKN-LIMIT)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-limit-001-missing-resource-requestslimits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LIMIT-001: Missing resource requests/limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-limit-002-excessive-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LIMIT-002: Excessive timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chains-readiness-tkn-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chains Readiness (TKN-CHAIN)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Chains Readiness (TKN-CHAIN)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-001-build-pipeline-without-chains-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-001: Build pipeline without Chains annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-002-missing-provenance-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-002: Missing provenance annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-003-verificationpolicy-with-unanchored-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-003: VerificationPolicy with unanchored regex
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-004-chains-consumed-result-from-untrusted-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-004: Chains-consumed result from untrusted task
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-005-build-pipeline-without-sbom-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-005: Build pipeline without SBOM task
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-006-chains-result-producer-with-onerror-continue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-006: Chains result producer with onError continue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-logic-tkn-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Logic (TKN-LOGIC)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeline Logic (TKN-LOGIC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-001-security-task-not-in-finally-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-001: Security task not in finally block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-002-overridable-security-relevant-param-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-002: Overridable security-relevant param default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-003-toctou-via-parallel-workspace-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-003: TOCTOU via parallel workspace access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-004-pipeline-without-finally-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-004: Pipeline without finally block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-005-security-task-with-onerror-continue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-005: Security task with onError continue
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-006-parameterized-step-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-006: Parameterized step image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-007-retries-on-security-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-007: Retries on security task
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6">
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#check-categories-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Categories Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pinning-tkn-pin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pinning (TKN-PIN)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pinning (TKN-PIN)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-001-mutable-pipeline-revision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-001: Mutable pipeline revision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-002-mutable-task-reference-git-resolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-002: Mutable task reference (git resolver)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-003-unpinned-task-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-003: Unpinned task bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-004-mutable-step-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-004: Mutable step image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-pin-005-mutable-stepaction-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-PIN-005: Mutable StepAction reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trust-tkn-trust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust (TKN-TRUST)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trust (TKN-TRUST)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-001-pipeline-from-untrusted-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-001: Pipeline from untrusted source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-002-task-from-untrusted-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-002: Task from untrusted source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-003-unverified-cluster-task-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-003: Unverified cluster task reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-004-http-resolver-without-digest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-004: HTTP resolver without digest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-005-cluster-resolver-in-shared-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-005: Cluster resolver in shared namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trust-006-bundle-without-verificationpolicy-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRUST-006: Bundle without VerificationPolicy coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serviceaccount-tkn-sa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ServiceAccount (TKN-SA)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ServiceAccount (TKN-SA)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-sa-001-default-serviceaccount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-SA-001: Default ServiceAccount
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-sa-002-missing-serviceaccount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-SA-002: Missing ServiceAccount
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workspace-tkn-ws" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace (TKN-WS)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Workspace (TKN-WS)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-ws-001-secret-workspace-without-readonly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-WS-001: Secret workspace without readOnly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-ws-002-shared-workspace-with-untrusted-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-WS-002: Shared workspace with untrusted tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#result-injection-tkn-res" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Result Injection (TKN-RES)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Result Injection (TKN-RES)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-res-001-parameterresult-interpolation-in-script-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-RES-001: Parameter/result interpolation in script block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-res-002-parameter-interpolation-in-command-args" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-RES-002: Parameter interpolation in command args
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-res-003-pac-sourced-parameter-taint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-RES-003: PaC-sourced parameter taint
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-context-tkn-sec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Context (TKN-SEC)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Context (TKN-SEC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-sec-001-privileged-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-SEC-001: Privileged container
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-sec-002-root-user-or-privilege-escalation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-SEC-002: Root user or privilege escalation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volume-mounts-tkn-vol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volume Mounts (TKN-VOL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Volume Mounts (TKN-VOL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-vol-001-host-path-volume-mount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-VOL-001: Host path volume mount
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-vol-002-container-runtime-socket-mount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-VOL-002: Container runtime socket mount
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger-security-tkn-trig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger Security (TKN-TRIG)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trigger Security (TKN-TRIG)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-001-cel-expression-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-001: CEL expression injection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-002-overly-permissive-trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-002: Overly permissive trigger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-003-conditional-skip-of-security-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-003: Conditional skip of security tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-004-triggertemplate-param-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-004: TriggerTemplate param injection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-005-eventlistener-without-interceptor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-005: EventListener without interceptor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-006-pac-repository-allows-all-branches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-006: PaC Repository allows all branches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-007-eventlistener-with-defaultmissing-sa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-007: EventListener with default/missing SA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-008-triggerbinding-extracts-sensitive-webhook-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-008: TriggerBinding extracts sensitive webhook fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-trig-009-eventlistener-without-tls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-TRIG-009: EventListener without TLS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exfiltration-tkn-exfil" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exfiltration (TKN-EXFIL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exfiltration (TKN-EXFIL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-exfil-001-task-with-secret-access-and-network-capable-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-EXFIL-001: Task with secret access and network-capable scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-exfil-002-network-tool-in-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-EXFIL-002: Network tool in script
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resource-limits-tkn-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resource Limits (TKN-LIMIT)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource Limits (TKN-LIMIT)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-limit-001-missing-resource-requestslimits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LIMIT-001: Missing resource requests/limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-limit-002-excessive-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LIMIT-002: Excessive timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chains-readiness-tkn-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chains Readiness (TKN-CHAIN)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Chains Readiness (TKN-CHAIN)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-001-build-pipeline-without-chains-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-001: Build pipeline without Chains annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-002-missing-provenance-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-002: Missing provenance annotations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-003-verificationpolicy-with-unanchored-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-003: VerificationPolicy with unanchored regex
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-004-chains-consumed-result-from-untrusted-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-004: Chains-consumed result from untrusted task
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-005-build-pipeline-without-sbom-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-005: Build pipeline without SBOM task
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-chain-006-chains-result-producer-with-onerror-continue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-CHAIN-006: Chains result producer with onError continue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-logic-tkn-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Logic (TKN-LOGIC)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeline Logic (TKN-LOGIC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-001-security-task-not-in-finally-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-001: Security task not in finally block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-002-overridable-security-relevant-param-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-002: Overridable security-relevant param default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-003-toctou-via-parallel-workspace-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-003: TOCTOU via parallel workspace access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-004-pipeline-without-finally-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-004: Pipeline without finally block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-005-security-task-with-onerror-continue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-005: Security task with onError continue
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-006-parameterized-step-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-006: Parameterized step image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tkn-logic-007-retries-on-security-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TKN-LOGIC-007: Retries on security task
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation">
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../cli/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Reference
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="detection-rules">Detection Rules<a class="headerlink" href="#detection-rules" title="Permanent link">¶</a></h1>
+<p>tekton-guard includes 48 security checks across 12 categories. Each check has a unique rule ID, severity level, and CWE mapping.</p>
+<h2 id="check-categories-overview">Check Categories Overview<a class="headerlink" href="#check-categories-overview" title="Permanent link">¶</a></h2>
+<pre class="mermaid"><code>graph TD
+    subgraph CRITICAL
+        VOL002["TKN-VOL-002&lt;br/&gt;Runtime Socket"]
+        TRIG001["TKN-TRIG-001&lt;br/&gt;CEL Injection"]
+    end
+    subgraph HIGH
+        PIN001["TKN-PIN-001..003,005&lt;br/&gt;Mutable Refs"]
+        TRUST001["TKN-TRUST-001..002&lt;br/&gt;Untrusted Sources"]
+        TRUST004["TKN-TRUST-004&lt;br/&gt;HTTP No Digest"]
+        SEC001["TKN-SEC-001&lt;br/&gt;Privileged"]
+        VOL001["TKN-VOL-001&lt;br/&gt;Host Path"]
+        SA001["TKN-SA-001&lt;br/&gt;Default SA"]
+        TRIG004["TKN-TRIG-004&lt;br/&gt;TT Param Injection"]
+        CHAIN003["TKN-CHAIN-003&lt;br/&gt;Unanchored VP Regex"]
+        CHAIN004["TKN-CHAIN-004&lt;br/&gt;Untrusted Result Producer"]
+        CHAIN006["TKN-CHAIN-006&lt;br/&gt;onError Result Producer"]
+        LOGIC005["TKN-LOGIC-005&lt;br/&gt;Security onError"]
+        LOGIC006["TKN-LOGIC-006&lt;br/&gt;Parameterized Image"]
+    end
+    subgraph MEDIUM
+        PIN004["TKN-PIN-004&lt;br/&gt;Mutable Step Image"]
+        TRUST003["TKN-TRUST-003&lt;br/&gt;Cluster Task"]
+        TRUST005["TKN-TRUST-005&lt;br/&gt;Shared Namespace"]
+        TRUST006["TKN-TRUST-006&lt;br/&gt;No VP Coverage"]
+        SA002["TKN-SA-002&lt;br/&gt;Missing SA"]
+        WS002["TKN-WS-002&lt;br/&gt;Shared Workspace"]
+        RES001["TKN-RES-001&lt;br/&gt;Script Injection"]
+        RES003["TKN-RES-003&lt;br/&gt;PaC Taint"]
+        SEC002["TKN-SEC-002&lt;br/&gt;Root User"]
+        TRIG002["TKN-TRIG-002..003&lt;br/&gt;Triggers"]
+        TRIG005["TKN-TRIG-005&lt;br/&gt;No Interceptor"]
+        TRIG006["TKN-TRIG-006&lt;br/&gt;All Branches"]
+        TRIG007["TKN-TRIG-007&lt;br/&gt;EL Default SA"]
+        TRIG008["TKN-TRIG-008&lt;br/&gt;Sensitive Binding"]
+        EXFIL001["TKN-EXFIL-001&lt;br/&gt;Secret+Network"]
+        LOGIC001["TKN-LOGIC-001&lt;br/&gt;Not in Finally"]
+        LOGIC003["TKN-LOGIC-003&lt;br/&gt;TOCTOU"]
+        LOGIC007["TKN-LOGIC-007&lt;br/&gt;Retries Security"]
+    end
+    subgraph LOW
+        WS001["TKN-WS-001&lt;br/&gt;ReadOnly"]
+        RES002["TKN-RES-002&lt;br/&gt;Args Interp"]
+        CHAIN001["TKN-CHAIN-001&lt;br/&gt;Chains Readiness"]
+        CHAIN005["TKN-CHAIN-005&lt;br/&gt;No SBOM"]
+        LIMIT002["TKN-LIMIT-002&lt;br/&gt;Timeout"]
+        EXFIL002["TKN-EXFIL-002&lt;br/&gt;Net Tools"]
+        TRIG009["TKN-TRIG-009&lt;br/&gt;No TLS"]
+        LOGIC002["TKN-LOGIC-002&lt;br/&gt;Overridable Param"]
+        LOGIC004["TKN-LOGIC-004&lt;br/&gt;No Finally Block"]
+    end
+
+    subgraph INFO
+        CHAIN002["TKN-CHAIN-002&lt;br/&gt;Missing Provenance Annotations"]
+    end
+
+    style CRITICAL fill:#d32f2f,color:#fff
+    style HIGH fill:#f57c00,color:#fff
+    style MEDIUM fill:#fbc02d,color:#000
+    style LOW fill:#388e3c,color:#fff
+    style INFO fill:#1976d2,color:#fff</code></pre>
+<hr>
+<h2 id="pinning-tkn-pin">Pinning (TKN-PIN)<a class="headerlink" href="#pinning-tkn-pin" title="Permanent link">¶</a></h2>
+<div class="admonition danger">
+<p class="admonition-title">Supply chain integrity</p>
+<p>Mutable references allow pipeline tampering without any commit to your repository. Pin all references to immutable SHAs or digests. These checks enforce SLSA Build L3 requirements.</p>
+</div>
+<h3 id="tkn-pin-001-mutable-pipeline-revision">TKN-PIN-001: Mutable pipeline revision<a class="headerlink" href="#tkn-pin-001-mutable-pipeline-revision" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-829 (Inclusion of Functionality from Untrusted Control Sphere)</li>
+<li><strong>Applies to</strong>: PipelineRun</li>
+<li><strong>Detect</strong>: <code>pipelineRef.resolver: git</code> with <code>revision</code> param that is not a 40-character hex SHA</li>
+<li><strong>Risk</strong>: A push to the referenced branch can alter the build pipeline without any commit to this repository, breaking SLSA Build L3.</li>
+<li><strong>Fix</strong>: Pin revision to a 40-character commit SHA. Use Renovate or Mintmaker to keep SHA-pinned refs up to date. Auto-fixable with <code>--fix</code>.</li>
+</ul>
+<h3 id="tkn-pin-002-mutable-task-reference-git-resolver">TKN-PIN-002: Mutable task reference (git resolver)<a class="headerlink" href="#tkn-pin-002-mutable-task-reference-git-resolver" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-829</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: <code>taskRef.resolver: git</code> with non-SHA revision in Pipeline task definitions</li>
+<li><strong>Risk</strong>: An attacker with push access to the source repo can inject malicious task code.</li>
+<li><strong>Fix</strong>: Pin the task's git revision to a 40-character commit SHA. Auto-fixable with <code>--fix</code>.</li>
+</ul>
+<h3 id="tkn-pin-003-unpinned-task-bundle">TKN-PIN-003: Unpinned task bundle<a class="headerlink" href="#tkn-pin-003-unpinned-task-bundle" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-829</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: <code>taskRef.resolver: bundles</code> where bundle param lacks <code>@sha256:</code> digest</li>
+<li><strong>Risk</strong>: Bundle tags are mutable and can be overwritten with malicious content.</li>
+<li><strong>Fix</strong>: Pin the bundle reference to include <code>@sha256:&lt;digest&gt;</code>.</li>
+</ul>
+<h3 id="tkn-pin-004-mutable-step-image">TKN-PIN-004: Mutable step image<a class="headerlink" href="#tkn-pin-004-mutable-step-image" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-829</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: <code>steps[].image</code> or <code>sidecars[].image</code> without <code>@sha256:</code> digest</li>
+<li><strong>Risk</strong>: Image tags are mutable and can be overwritten to inject malicious code into the build.</li>
+<li><strong>Fix</strong>: Pin the image to a digest: <code>image: &lt;registry&gt;/&lt;image&gt;@sha256:&lt;digest&gt;</code></li>
+</ul>
+<h3 id="tkn-pin-005-mutable-stepaction-reference">TKN-PIN-005: Mutable StepAction reference<a class="headerlink" href="#tkn-pin-005-mutable-stepaction-reference" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-829</li>
+<li><strong>Applies to</strong>: Task (steps with <code>ref</code>)</li>
+<li><strong>Detect</strong>: Step-level <code>ref.resolver: git</code> with mutable revision</li>
+<li><strong>Risk</strong>: The StepAction code can be changed without any commit to this repository.</li>
+<li><strong>Fix</strong>: Pin the StepAction's git revision to a 40-character commit SHA. Auto-fixable with <code>--fix</code>.</li>
+</ul>
+<hr>
+<h2 id="trust-tkn-trust">Trust (TKN-TRUST)<a class="headerlink" href="#trust-tkn-trust" title="Permanent link">¶</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Source verification</p>
+<p>Untrusted pipeline and task sources can execute arbitrary code in your build environment. Configure <code>trusted_git_sources</code> in your config to define which organizations are authorized.</p>
+</div>
+<h3 id="tkn-trust-001-pipeline-from-untrusted-source">TKN-TRUST-001: Pipeline from untrusted source<a class="headerlink" href="#tkn-trust-001-pipeline-from-untrusted-source" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-829</li>
+<li><strong>Applies to</strong>: PipelineRun</li>
+<li><strong>Detect</strong>: <code>pipelineRef.resolver: git</code> with URL not in <code>trusted_git_sources</code></li>
+<li><strong>Risk</strong>: Untrusted pipeline sources can execute arbitrary code in the build environment.</li>
+<li><strong>Fix</strong>: Use a pipeline from a trusted source or add the source to <code>trusted_git_sources</code> in the config file.</li>
+</ul>
+<h3 id="tkn-trust-002-task-from-untrusted-source">TKN-TRUST-002: Task from untrusted source<a class="headerlink" href="#tkn-trust-002-task-from-untrusted-source" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-829</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: <code>taskRef.resolver: git|hub</code> where the source URL (or hub catalog) is not in the trusted sources list</li>
+<li><strong>Risk</strong>: Untrusted tasks can exfiltrate secrets or inject malicious code.</li>
+<li><strong>Fix</strong>: Use tasks from trusted sources or add the source to <code>trusted_git_sources</code> in the config file.</li>
+</ul>
+<h3 id="tkn-trust-003-unverified-cluster-task-reference">TKN-TRUST-003: Unverified cluster task reference<a class="headerlink" href="#tkn-trust-003-unverified-cluster-task-reference" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-829</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: <code>taskRef.name</code> without resolver (cluster-local reference, mutable, unversioned)</li>
+<li><strong>Risk</strong>: Cluster tasks are mutable: anyone with write access to the namespace can replace them.</li>
+<li><strong>Fix</strong>: Use a bundle or git resolver with a pinned reference instead of cluster-local task names.</li>
+</ul>
+<h3 id="tkn-trust-004-http-resolver-without-digest">TKN-TRUST-004: HTTP resolver without digest<a class="headerlink" href="#tkn-trust-004-http-resolver-without-digest" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-829 (Inclusion of Functionality from Untrusted Control Sphere)</li>
+<li><strong>Applies to</strong>: PipelineRun, Pipeline</li>
+<li><strong>Detect</strong>: <code>pipelineRef</code> or <code>taskRef</code> using <code>resolver: http</code> without a <code>digest</code> param</li>
+<li><strong>Risk</strong>: Without integrity verification, a man-in-the-middle or compromised server can inject malicious task/pipeline definitions.</li>
+<li><strong>Fix</strong>: Add a digest param to the HTTP resolver: <code>digest: sha256:&lt;hash&gt;</code></li>
+</ul>
+<h3 id="tkn-trust-005-cluster-resolver-in-shared-namespace">TKN-TRUST-005: Cluster resolver in shared namespace<a class="headerlink" href="#tkn-trust-005-cluster-resolver-in-shared-namespace" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-829 (Inclusion of Functionality from Untrusted Control Sphere)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: <code>taskRef.resolver: cluster</code> where the <code>namespace</code> param is in the <code>shared_namespaces</code> config (default: <code>tekton-pipelines</code>, <code>openshift-pipelines</code>)</li>
+<li><strong>Risk</strong>: Any user with Task create permission in the shared namespace can replace the referenced task.</li>
+<li><strong>Fix</strong>: Use a dedicated namespace for cluster-resolver tasks, or switch to bundle/git resolver with pinning.</li>
+</ul>
+<h3 id="tkn-trust-006-bundle-without-verificationpolicy-coverage">TKN-TRUST-006: Bundle without VerificationPolicy coverage<a class="headerlink" href="#tkn-trust-006-bundle-without-verificationpolicy-coverage" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-345 (Insufficient Verification of Data Authenticity)</li>
+<li><strong>Applies to</strong>: Pipeline (correlation check, requires VerificationPolicy resources in scan scope)</li>
+<li><strong>Detect</strong>: <code>taskRef.resolver: bundles</code> where the bundle image does not match any <code>resourcePattern</code> in scanned VerificationPolicy resources</li>
+<li><strong>Risk</strong>: Bundle content is not signature-verified before execution.</li>
+<li><strong>Fix</strong>: Create a VerificationPolicy with a <code>resourcePattern</code> covering this bundle's registry.</li>
+</ul>
+<hr>
+<h2 id="serviceaccount-tkn-sa">ServiceAccount (TKN-SA)<a class="headerlink" href="#serviceaccount-tkn-sa" title="Permanent link">¶</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Privilege management</p>
+<p>Build workloads should use dedicated ServiceAccounts with minimal RBAC. The default SA often has broad permissions that violate least-privilege.</p>
+</div>
+<h3 id="tkn-sa-001-default-serviceaccount">TKN-SA-001: Default ServiceAccount<a class="headerlink" href="#tkn-sa-001-default-serviceaccount" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-269 (Improper Privilege Management)</li>
+<li><strong>Applies to</strong>: PipelineRun, TaskRun</li>
+<li><strong>Detect</strong>: <code>serviceAccountName: default</code> on PipelineRun/TaskRun</li>
+<li><strong>Risk</strong>: The default SA may have broad permissions that violate least-privilege. Build workloads should use a dedicated SA with minimal RBAC.</li>
+<li><strong>Fix</strong>: Create and use a dedicated ServiceAccount with only the permissions required for this pipeline.</li>
+</ul>
+<h3 id="tkn-sa-002-missing-serviceaccount">TKN-SA-002: Missing ServiceAccount<a class="headerlink" href="#tkn-sa-002-missing-serviceaccount" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-269</li>
+<li><strong>Applies to</strong>: PipelineRun, TaskRun</li>
+<li><strong>Detect</strong>: PipelineRun/TaskRun with no <code>serviceAccountName</code> set</li>
+<li><strong>Risk</strong>: The workload inherits the namespace default ServiceAccount, which may have unintended permissions.</li>
+<li><strong>Fix</strong>: Explicitly set <code>serviceAccountName</code> in <code>taskRunTemplate</code> (PipelineRun) or <code>spec</code> (TaskRun).</li>
+</ul>
+<hr>
+<h2 id="workspace-tkn-ws">Workspace (TKN-WS)<a class="headerlink" href="#workspace-tkn-ws" title="Permanent link">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Data isolation</p>
+<p>Workspaces are the primary data-sharing mechanism in Tekton pipelines. Improper workspace configuration can expose secrets or allow untrusted tasks to tamper with build data.</p>
+</div>
+<h3 id="tkn-ws-001-secret-workspace-without-readonly">TKN-WS-001: Secret workspace without readOnly<a class="headerlink" href="#tkn-ws-001-secret-workspace-without-readonly" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-732 (Incorrect Permission Assignment for Critical Resource)</li>
+<li><strong>Applies to</strong>: PipelineRun, TaskRun</li>
+<li><strong>Detect</strong>: Workspace backed by secret without <code>readOnly: true</code></li>
+<li><strong>Risk</strong>: Tasks could potentially modify the secret content.</li>
+<li><strong>Fix</strong>: Add <code>readOnly: true</code> to the workspace binding for secret-backed workspaces. Auto-fixable with <code>--fix</code>.</li>
+</ul>
+<h3 id="tkn-ws-002-shared-workspace-with-untrusted-tasks">TKN-WS-002: Shared workspace with untrusted tasks<a class="headerlink" href="#tkn-ws-002-shared-workspace-with-untrusted-tasks" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-732</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Multiple tasks sharing a workspace where at least one task is from an untrusted source (git or hub resolver with untrusted URL)</li>
+<li><strong>Risk</strong>: Untrusted tasks could read secrets or tamper with data from other tasks via the shared workspace.</li>
+<li><strong>Fix</strong>: Isolate untrusted tasks with separate workspaces, or use Tekton Trusted Artifacts for verified data passing.</li>
+</ul>
+<hr>
+<h2 id="result-injection-tkn-res">Result Injection (TKN-RES)<a class="headerlink" href="#result-injection-tkn-res" title="Permanent link">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Code injection prevention</p>
+<p>Parameter and result interpolation in Tekton scripts is the equivalent of GitHub Actions <code>${{ }}</code> injection. Untrusted input interpolated into scripts enables arbitrary code execution.</p>
+</div>
+<h3 id="tkn-res-001-parameterresult-interpolation-in-script-block">TKN-RES-001: Parameter/result interpolation in script block<a class="headerlink" href="#tkn-res-001-parameterresult-interpolation-in-script-block" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-94 (Improper Control of Generation of Code)</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: <code>$(params.*)</code> or <code>$(tasks.*.results.*)</code> used inside <code>script:</code> blocks</li>
+<li><strong>Risk</strong>: The Tekton equivalent of GitHub Actions <code>${{ }}</code> injection. Untrusted input interpolated into scripts enables arbitrary code execution.</li>
+<li><strong>Fix</strong>: Pass values as environment variables instead of interpolating in scripts. Use <code>env</code> with <code>value: $(params.name)</code> and reference <code>$ENV_VAR</code> in the script.</li>
+</ul>
+<h3 id="tkn-res-002-parameter-interpolation-in-command-args">TKN-RES-002: Parameter interpolation in command args<a class="headerlink" href="#tkn-res-002-parameter-interpolation-in-command-args" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-78 (Improper Neutralization of Special Elements used in an OS Command)</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: <code>$(params.*)</code> used in <code>args:</code> or <code>command:</code> arrays</li>
+<li><strong>Risk</strong>: While safer than script injection, this can still enable command injection if values are untrusted.</li>
+<li><strong>Fix</strong>: Validate parameter values before use, or pass them as environment variables.</li>
+</ul>
+<h3 id="tkn-res-003-pac-sourced-parameter-taint">TKN-RES-003: PaC-sourced parameter taint<a class="headerlink" href="#tkn-res-003-pac-sourced-parameter-taint" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-94</li>
+<li><strong>Applies to</strong>: PipelineRun</li>
+<li><strong>Detect</strong>: PipelineRun params that contain PipelinesAsCode template variables from user-controlled webhook data (<code>source_url</code>, <code>repo_url</code>, <code>revision</code>, <code>source_branch</code>, <code>target_branch</code>, <code>sender</code>, <code>pull_request_number</code>, <code>body</code>)</li>
+<li><strong>Risk</strong>: These values come from webhook data and may reach script interpolation points in referenced tasks. An attacker can craft a PR with a malicious branch name or PR body to inject code.</li>
+<li><strong>Fix</strong>: Validate PaC-sourced parameter values before using them in scripts. Pass through environment variables instead of direct interpolation.</li>
+</ul>
+<hr>
+<h2 id="security-context-tkn-sec">Security Context (TKN-SEC)<a class="headerlink" href="#security-context-tkn-sec" title="Permanent link">¶</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Container isolation</p>
+<p>Privileged containers and root execution weaken the container sandbox. A compromised container with elevated privileges can escape to the host node.</p>
+</div>
+<h3 id="tkn-sec-001-privileged-container">TKN-SEC-001: Privileged container<a class="headerlink" href="#tkn-sec-001-privileged-container" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-250 (Execution with Unnecessary Privileges)</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: <code>securityContext.privileged: true</code> on step or sidecar containers</li>
+<li><strong>Risk</strong>: A compromised container with privileged access can escape the sandbox and access the host node.</li>
+<li><strong>Fix</strong>: Remove <code>privileged: true</code> from <code>securityContext</code>. If elevated access is needed, use specific capabilities instead.</li>
+</ul>
+<h3 id="tkn-sec-002-root-user-or-privilege-escalation">TKN-SEC-002: Root user or privilege escalation<a class="headerlink" href="#tkn-sec-002-root-user-or-privilege-escalation" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-250</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: <code>securityContext.runAsUser: 0</code> or <code>securityContext.allowPrivilegeEscalation: true</code> on step or sidecar containers</li>
+<li><strong>Risk</strong>: Running as root increases the blast radius of container escapes.</li>
+<li><strong>Fix</strong>: Set <code>runAsNonRoot: true</code> and <code>allowPrivilegeEscalation: false</code> in <code>securityContext</code>.</li>
+</ul>
+<hr>
+<h2 id="volume-mounts-tkn-vol">Volume Mounts (TKN-VOL)<a class="headerlink" href="#volume-mounts-tkn-vol" title="Permanent link">¶</a></h2>
+<div class="admonition danger">
+<p class="admonition-title">Host access</p>
+<p>Host path volumes and container runtime socket mounts are the most severe findings. They grant direct access to the node filesystem or full control over the container runtime.</p>
+</div>
+<h3 id="tkn-vol-001-host-path-volume-mount">TKN-VOL-001: Host path volume mount<a class="headerlink" href="#tkn-vol-001-host-path-volume-mount" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-284 (Improper Access Control)</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: <code>volumes[].hostPath</code> entries (excluding container runtime socket paths, which are caught by VOL-002)</li>
+<li><strong>Risk</strong>: Host path volumes give direct access to the node filesystem, enabling container escape and data exfiltration.</li>
+<li><strong>Fix</strong>: Remove the <code>hostPath</code> volume. Use <code>emptyDir</code> or PVC-backed volumes instead.</li>
+</ul>
+<h3 id="tkn-vol-002-container-runtime-socket-mount">TKN-VOL-002: Container runtime socket mount<a class="headerlink" href="#tkn-vol-002-container-runtime-socket-mount" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: CRITICAL</li>
+<li><strong>CWE</strong>: CWE-284</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: <code>hostPath</code> volumes mounting container runtime sockets: <code>/var/run/docker.sock</code>, <code>/run/containerd/containerd.sock</code>, <code>/var/run/crio/crio.sock</code>, <code>/run/docker.sock</code></li>
+<li><strong>Risk</strong>: Grants full control over the container runtime, enabling arbitrary container creation, image manipulation, and node compromise.</li>
+<li><strong>Fix</strong>: Remove the runtime socket mount. Use rootless build tools (buildah, kaniko) that don't require Docker socket access.</li>
+</ul>
+<hr>
+<h2 id="trigger-security-tkn-trig">Trigger Security (TKN-TRIG)<a class="headerlink" href="#trigger-security-tkn-trig" title="Permanent link">¶</a></h2>
+<div class="admonition danger">
+<p class="admonition-title">Remote code execution</p>
+<p>CEL expression injection (TKN-TRIG-001) is a CRITICAL finding. An attacker can craft a PR title, branch name, or commit message to inject code into the CEL expression evaluator. This is the Tekton equivalent of GitHub Actions <code>pull_request_target</code> injection.</p>
+</div>
+<h3 id="tkn-trig-001-cel-expression-injection">TKN-TRIG-001: CEL expression injection<a class="headerlink" href="#tkn-trig-001-cel-expression-injection" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: CRITICAL</li>
+<li><strong>CWE</strong>: CWE-94</li>
+<li><strong>Applies to</strong>: PipelineRun</li>
+<li><strong>Detect</strong>: <code>pipelinesascode.tekton.dev/on-cel-expression</code> annotation that references user-controlled webhook body fields (<code>body.pull_request.title</code>, <code>body.pull_request.body</code>, <code>body.pull_request.head.ref</code>, <code>body.head_commit.message</code>, <code>body.commits</code>, <code>body.comment.body</code>, <code>body.sender</code>)</li>
+<li><strong>Risk</strong>: An attacker can craft a PR title, branch name, or commit message to inject code into the CEL expression. This is the Tekton equivalent of GitHub Actions <code>pull_request_target</code> injection.</li>
+<li><strong>Fix</strong>: Avoid referencing user-controlled body fields in CEL expressions. Use event type and target branch filtering only.</li>
+</ul>
+<h3 id="tkn-trig-002-overly-permissive-trigger">TKN-TRIG-002: Overly permissive trigger<a class="headerlink" href="#tkn-trig-002-overly-permissive-trigger" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-284</li>
+<li><strong>Applies to</strong>: PipelineRun</li>
+<li><strong>Detect</strong>: Push triggers without <code>target_branch</code> filter in CEL expressions, or comment triggers (<code>on-comment</code>) without <code>on-target-branch</code> restriction</li>
+<li><strong>Risk</strong>: Any push to any branch will trigger this pipeline, or comment triggers accept comments on all branches.</li>
+<li><strong>Fix</strong>: Add <code>target_branch</code> filter to CEL expression for push triggers. Add <code>pipelinesascode.tekton.dev/on-target-branch</code> annotation for comment triggers.</li>
+</ul>
+<h3 id="tkn-trig-003-conditional-skip-of-security-tasks">TKN-TRIG-003: Conditional skip of security tasks<a class="headerlink" href="#tkn-trig-003-conditional-skip-of-security-tasks" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-693 (Protection Mechanism Failure)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Security-related tasks (matching patterns: scan, sign, verify, attest, cosign, enterprise-contract, sast, clair, clamav) with <code>when</code> expressions that reference <code>$(params.*)</code> or <code>$(tasks.*)</code> inputs</li>
+<li><strong>Risk</strong>: If the parameter controlling the <code>when</code> expression is user-controlled, an attacker could craft input to skip security checks.</li>
+<li><strong>Fix</strong>: Remove conditional <code>when</code> expressions from security-critical tasks, or validate that the <code>when</code> input is not user-controlled.</li>
+</ul>
+<h3 id="tkn-trig-004-triggertemplate-param-injection">TKN-TRIG-004: TriggerTemplate param injection<a class="headerlink" href="#tkn-trig-004-triggertemplate-param-injection" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-94 (Improper Control of Generation of Code)</li>
+<li><strong>Applies to</strong>: TriggerTemplate</li>
+<li><strong>Detect</strong>: <code>$(tt.params.*)</code> interpolations in <code>resourcetemplates</code>. These values flow from webhook body via TriggerBindings.</li>
+<li><strong>Risk</strong>: Webhook body fields passed through TriggerBindings and interpolated in TriggerTemplates may reach task script blocks, enabling code injection.</li>
+<li><strong>Fix</strong>: Validate trigger params before passing to PipelineRun. Avoid interpolating webhook body fields directly.</li>
+</ul>
+<h3 id="tkn-trig-005-eventlistener-without-interceptor">TKN-TRIG-005: EventListener without interceptor<a class="headerlink" href="#tkn-trig-005-eventlistener-without-interceptor" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-284 (Improper Access Control)</li>
+<li><strong>Applies to</strong>: EventListener</li>
+<li><strong>Detect</strong>: EventListener trigger entries with no <code>interceptors</code> configured</li>
+<li><strong>Risk</strong>: Raw webhook payloads reach TriggerBindings without signature verification or filtering.</li>
+<li><strong>Fix</strong>: Add a webhook interceptor (GitHub, GitLab, CEL, or Bitbucket) to validate payload authenticity.</li>
+</ul>
+<h3 id="tkn-trig-006-pac-repository-allows-all-branches">TKN-TRIG-006: PaC Repository allows all branches<a class="headerlink" href="#tkn-trig-006-pac-repository-allows-all-branches" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-284 (Improper Access Control)</li>
+<li><strong>Applies to</strong>: Repository (PipelinesAsCode)</li>
+<li><strong>Detect</strong>: PaC Repository CR with no <code>incoming</code> webhook restrictions</li>
+<li><strong>Risk</strong>: Any branch push or PR can trigger pipeline execution. PipelineRun-level CEL filters may provide additional restrictions, but the Repository CR itself is open.</li>
+<li><strong>Fix</strong>: Add <code>incoming</code> rules to restrict which branches and events trigger pipelines.</li>
+</ul>
+<h3 id="tkn-trig-007-eventlistener-with-defaultmissing-sa">TKN-TRIG-007: EventListener with default/missing SA<a class="headerlink" href="#tkn-trig-007-eventlistener-with-defaultmissing-sa" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-269 (Improper Privilege Management)</li>
+<li><strong>Applies to</strong>: EventListener</li>
+<li><strong>Detect</strong>: EventListener with <code>serviceAccountName: default</code> or no <code>serviceAccountName</code> set</li>
+<li><strong>Risk</strong>: The EventListener SA can create PipelineRuns and should use a dedicated SA with minimal permissions.</li>
+<li><strong>Fix</strong>: Set <code>serviceAccountName</code> to a dedicated SA with only PipelineRun create permission.</li>
+</ul>
+<h3 id="tkn-trig-008-triggerbinding-extracts-sensitive-webhook-fields">TKN-TRIG-008: TriggerBinding extracts sensitive webhook fields<a class="headerlink" href="#tkn-trig-008-triggerbinding-extracts-sensitive-webhook-fields" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-200 (Exposure of Sensitive Information)</li>
+<li><strong>Applies to</strong>: TriggerBinding</li>
+<li><strong>Detect</strong>: TriggerBinding params whose name or value matches sensitive patterns (secret, token, password, credential, key, auth)</li>
+<li><strong>Risk</strong>: Webhook body fields passed through TriggerBinding are logged in PipelineRun params and may be visible in cluster events.</li>
+<li><strong>Fix</strong>: Use Tekton Interceptors to extract and validate sensitive fields before they reach TriggerBinding params.</li>
+</ul>
+<h3 id="tkn-trig-009-eventlistener-without-tls">TKN-TRIG-009: EventListener without TLS<a class="headerlink" href="#tkn-trig-009-eventlistener-without-tls" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-319 (Cleartext Transmission of Sensitive Information)</li>
+<li><strong>Applies to</strong>: EventListener</li>
+<li><strong>Detect</strong>: EventListener without TLS configuration in <code>spec.resources.kubernetesResource.spec.tls</code></li>
+<li><strong>Risk</strong>: Webhook payloads including authentication tokens are transmitted in plaintext.</li>
+<li><strong>Fix</strong>: Configure TLS on the EventListener or terminate TLS at the ingress/route level.</li>
+</ul>
+<hr>
+<h2 id="exfiltration-tkn-exfil">Exfiltration (TKN-EXFIL)<a class="headerlink" href="#exfiltration-tkn-exfil" title="Permanent link">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Data loss prevention</p>
+<p>These checks detect combinations of secret access and network capabilities that could enable data exfiltration from the build environment.</p>
+</div>
+<h3 id="tkn-exfil-001-task-with-secret-access-and-network-capable-scripts">TKN-EXFIL-001: Task with secret access and network-capable scripts<a class="headerlink" href="#tkn-exfil-001-task-with-secret-access-and-network-capable-scripts" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-200 (Exposure of Sensitive Information)</li>
+<li><strong>Applies to</strong>: Task, StepAction</li>
+<li><strong>Detect</strong>: Task has access to secrets (via workspace or <code>secretKeyRef</code> env vars) and uses network tools in scripts: <code>curl</code>, <code>wget</code>, <code>nc</code>, <code>ncat</code>, <code>socat</code>, <code>telnet</code>, <code>openssl s_client</code>, <code>dig</code>, <code>nslookup</code>, or <code>/dev/tcp/</code></li>
+<li><strong>Risk</strong>: A compromised or malicious task could exfiltrate secrets to external endpoints.</li>
+<li><strong>Fix</strong>: Minimize secret exposure. Use dedicated tasks for secret access with no network tools. Apply NetworkPolicy to restrict egress.</li>
+</ul>
+<h3 id="tkn-exfil-002-network-tool-in-script">TKN-EXFIL-002: Network tool in script<a class="headerlink" href="#tkn-exfil-002-network-tool-in-script" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-200</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: Scripts containing network tools: <code>curl</code>, <code>wget</code>, <code>nc</code>, <code>ncat</code>, <code>socat</code>, <code>telnet</code>, <code>openssl s_client</code>, <code>dig</code>, <code>nslookup</code>, or <code>/dev/tcp/</code></li>
+<li><strong>Risk</strong>: These tools could be used for data exfiltration, even without direct secret access.</li>
+<li><strong>Fix</strong>: Review whether network access is necessary. Consider using NetworkPolicy to restrict egress.</li>
+</ul>
+<hr>
+<h2 id="resource-limits-tkn-limit">Resource Limits (TKN-LIMIT)<a class="headerlink" href="#resource-limits-tkn-limit" title="Permanent link">¶</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">Attack window reduction</p>
+<p>Long-running pipelines increase the window of opportunity for compromised tasks. Set reasonable timeouts to limit exposure.</p>
+</div>
+<h3 id="tkn-limit-001-missing-resource-requestslimits">TKN-LIMIT-001: Missing resource requests/limits<a class="headerlink" href="#tkn-limit-001-missing-resource-requestslimits" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-400</li>
+<li><strong>Applies to</strong>: Task, StepAction, Pipeline (inline taskSpec)</li>
+<li><strong>Detect</strong>: Steps or sidecars without <code>resources.requests</code> or <code>resources.limits</code></li>
+<li><strong>Risk</strong>: Unbounded resource consumption can cause DoS or noisy-neighbor issues in shared build clusters</li>
+<li><strong>Fix</strong>: Add resources.requests and resources.limits to step specs</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Disabled by default</p>
+<p>This check is in <code>skip_checks</code> by default because Konflux namespace LimitRange objects handle resource limits. Enable it by setting <code>skip_checks: []</code> in your config.</p>
+</div>
+<h3 id="tkn-limit-002-excessive-timeout">TKN-LIMIT-002: Excessive timeout<a class="headerlink" href="#tkn-limit-002-excessive-timeout" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-400 (Uncontrolled Resource Consumption)</li>
+<li><strong>Applies to</strong>: PipelineRun</li>
+<li><strong>Detect</strong>: <code>spec.timeouts.pipeline</code> exceeding 4 hours, or <code>spec.timeouts.tasks</code> exceeding 2 hours</li>
+<li><strong>Risk</strong>: Long-running pipelines increase the attack window for compromised tasks.</li>
+<li><strong>Fix</strong>: Reduce pipeline timeout to 4 hours or less, task timeout to 2 hours or less.</li>
+</ul>
+<hr>
+<h2 id="chains-readiness-tkn-chain">Chains Readiness (TKN-CHAIN)<a class="headerlink" href="#chains-readiness-tkn-chain" title="Permanent link">¶</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">SLSA provenance</p>
+<p>Tekton Chains generates SLSA provenance attestations for builds. These checks ensure your pipelines are configured correctly for Chains to produce and sign provenance data.</p>
+</div>
+<h3 id="tkn-chain-001-build-pipeline-without-chains-annotations">TKN-CHAIN-001: Build pipeline without Chains annotations<a class="headerlink" href="#tkn-chain-001-build-pipeline-without-chains-annotations" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-345 (Insufficient Verification of Data Authenticity)</li>
+<li><strong>Applies to</strong>: PipelineRun (with <code>pipelines.appstudio.openshift.io/type: build</code> label)</li>
+<li><strong>Detect</strong>: Build-type PipelineRun without <code>chains.tekton.dev</code> or Konflux/AppStudio annotations. Suppressed for PipelineRuns with Konflux labels (<code>appstudio.openshift.io/application</code> or <code>appstudio.openshift.io/component</code>).</li>
+<li><strong>Risk</strong>: Tekton Chains may not generate provenance attestations for this build.</li>
+<li><strong>Fix</strong>: Ensure the referenced pipeline produces <code>IMAGE_URL</code> and <code>IMAGE_DIGEST</code> results for Tekton Chains to sign.</li>
+</ul>
+<h3 id="tkn-chain-002-missing-provenance-annotations">TKN-CHAIN-002: Missing provenance annotations<a class="headerlink" href="#tkn-chain-002-missing-provenance-annotations" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: INFO</li>
+<li><strong>CWE</strong>: CWE-345</li>
+<li><strong>Applies to</strong>: PipelineRun (with <code>pipelines.appstudio.openshift.io/type: build</code> label)</li>
+<li><strong>Detect</strong>: Build PipelineRun lacking <code>build.appstudio.redhat.com/commit_sha</code> annotation</li>
+<li><strong>Risk</strong>: Without this annotation, Tekton Chains cannot correlate builds to source commits for SLSA provenance.</li>
+<li><strong>Fix</strong>: Add <code>build.appstudio.redhat.com/commit_sha</code> annotation with the source commit SHA.</li>
+</ul>
+<h3 id="tkn-chain-003-verificationpolicy-with-unanchored-regex">TKN-CHAIN-003: VerificationPolicy with unanchored regex<a class="headerlink" href="#tkn-chain-003-verificationpolicy-with-unanchored-regex" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-185 (Incorrect Regular Expression)</li>
+<li><strong>Applies to</strong>: VerificationPolicy</li>
+<li><strong>Detect</strong>: <code>spec.resources[].resourcePattern</code> without <code>^</code> and <code>$</code> anchors</li>
+<li><strong>Risk</strong>: Unanchored patterns can match unintended resources (related to CVE-2026-25542).</li>
+<li><strong>Fix</strong>: Anchor the pattern with <code>^</code> and <code>$</code>: <code>^&lt;pattern&gt;$</code></li>
+</ul>
+<h3 id="tkn-chain-004-chains-consumed-result-from-untrusted-task">TKN-CHAIN-004: Chains-consumed result from untrusted task<a class="headerlink" href="#tkn-chain-004-chains-consumed-result-from-untrusted-task" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-345 (Insufficient Verification of Data Authenticity)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Pipeline tasks whose names suggest they produce build/image results (containing "build", "push", "image", "container") but are sourced from untrusted git or hub resolvers</li>
+<li><strong>Risk</strong>: A compromised task can poison Chains attestation by producing fraudulent IMAGE_URL/IMAGE_DIGEST results.</li>
+<li><strong>Fix</strong>: Use trusted, pinned sources for all tasks that produce IMAGE_URL/IMAGE_DIGEST results.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Overlap with TKN-TRUST-002</p>
+<p>This check may fire alongside TKN-TRUST-002 on the same task. This is expected: TRUST-002 flags the untrusted source, CHAIN-004 flags the supply chain attestation poisoning risk. They represent different risk dimensions.</p>
+</div>
+<h3 id="tkn-chain-005-build-pipeline-without-sbom-task">TKN-CHAIN-005: Build pipeline without SBOM task<a class="headerlink" href="#tkn-chain-005-build-pipeline-without-sbom-task" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-1059 (Insufficient Technical Documentation)</li>
+<li><strong>Applies to</strong>: Pipeline (with <code>pipelines.appstudio.openshift.io/type: build</code> label)</li>
+<li><strong>Detect</strong>: Build pipeline without a task matching SBOM patterns (sbom, syft, cyclonedx, spdx). Patterns are configurable via <code>security_task_patterns</code>.</li>
+<li><strong>Risk</strong>: Missing software bill of materials reduces supply chain transparency.</li>
+<li><strong>Fix</strong>: Add an SBOM generation task to the build pipeline.</li>
+</ul>
+<h3 id="tkn-chain-006-chains-result-producer-with-onerror-continue">TKN-CHAIN-006: Chains result producer with onError continue<a class="headerlink" href="#tkn-chain-006-chains-result-producer-with-onerror-continue" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-345 (Insufficient Verification of Data Authenticity)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Pipeline tasks that produce Chains-consumed results (IMAGE_URL, IMAGE_DIGEST, CHAINS-GIT_URL, CHAINS-GIT_COMMIT) with <code>onError: continue</code></li>
+<li><strong>Risk</strong>: If the task fails, Chains may sign invalid or incomplete attestation data.</li>
+<li><strong>Fix</strong>: Remove <code>onError: continue</code> from tasks that produce IMAGE_URL/IMAGE_DIGEST results.</li>
+</ul>
+<hr>
+<h2 id="pipeline-logic-tkn-logic">Pipeline Logic (TKN-LOGIC)<a class="headerlink" href="#pipeline-logic-tkn-logic" title="Permanent link">¶</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Pipeline execution integrity</p>
+<p>These checks detect logic flaws in pipeline structure that can undermine security controls: tasks that can be skipped, bypassed, or executed with attacker-controlled parameters. A well-structured pipeline ensures security tasks always run and cannot be influenced by untrusted input.</p>
+</div>
+<h3 id="tkn-logic-001-security-task-not-in-finally-block">TKN-LOGIC-001: Security task not in finally block<a class="headerlink" href="#tkn-logic-001-security-task-not-in-finally-block" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-693 (Protection Mechanism Failure)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Tasks matching <code>security_task_patterns</code> (scan, sign, verify, attest, cosign, enterprise-contract, sast, clair, clamav, sbom, syft, cyclonedx) placed in <code>spec.tasks</code> instead of <code>spec.finally</code></li>
+<li><strong>Risk</strong>: If any preceding task fails, the security task will be skipped entirely. Tasks in <code>spec.finally</code> always run regardless of pipeline success or failure.</li>
+<li><strong>Fix</strong>: Move security tasks (scan, sign, verify, attest) to the <code>finally</code> block.</li>
+</ul>
+<h3 id="tkn-logic-002-overridable-security-relevant-param-default">TKN-LOGIC-002: Overridable security-relevant param default<a class="headerlink" href="#tkn-logic-002-overridable-security-relevant-param-default" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-1188 (Initialization of a Resource with an Insecure Default)</li>
+<li><strong>Applies to</strong>: Task, StepAction</li>
+<li><strong>Detect</strong>: Task/StepAction params whose name or default value contains security keywords (privileged, tls-verify, skip, insecure, allow-all, no-verify, disable-auth, unsafe)</li>
+<li><strong>Risk</strong>: A PipelineRun caller can override the default to a less secure value.</li>
+<li><strong>Fix</strong>: Use hardcoded values instead of params for security-critical flags.</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Disabled by default</p>
+<p>TKN-LOGIC-002 is skipped by default (<code>skip_checks</code> includes it) because it can be noisy. Enable it by removing it from <code>skip_checks</code> in your config.</p>
+</div>
+<h3 id="tkn-logic-003-toctou-via-parallel-workspace-access">TKN-LOGIC-003: TOCTOU via parallel workspace access<a class="headerlink" href="#tkn-logic-003-toctou-via-parallel-workspace-access" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-367 (Time-of-check Time-of-use Race Condition)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Two tasks sharing a workspace that can run in parallel (no <code>runAfter</code> dependency, direct or transitive) where at least one task is from an untrusted source</li>
+<li><strong>Risk</strong>: An untrusted task could modify workspace data while another task reads it, creating a time-of-check-time-of-use race condition.</li>
+<li><strong>Fix</strong>: Add a <code>runAfter</code> dependency between tasks sharing a workspace, or use separate workspaces.</li>
+</ul>
+<h3 id="tkn-logic-004-pipeline-without-finally-block">TKN-LOGIC-004: Pipeline without finally block<a class="headerlink" href="#tkn-logic-004-pipeline-without-finally-block" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: LOW</li>
+<li><strong>CWE</strong>: CWE-390 (Detection of Error Condition Without Action)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Pipeline with tasks but no <code>spec.finally</code> block</li>
+<li><strong>Risk</strong>: No cleanup, reporting, or error handling runs on pipeline failure.</li>
+<li><strong>Fix</strong>: Add a <code>finally</code> block with at minimum a status-reporting task.</li>
+</ul>
+<h3 id="tkn-logic-005-security-task-with-onerror-continue">TKN-LOGIC-005: Security task with onError continue<a class="headerlink" href="#tkn-logic-005-security-task-with-onerror-continue" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-390 (Detection of Error Condition Without Action)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Security tasks (matching <code>security_task_patterns</code>) with <code>onError: continue</code></li>
+<li><strong>Risk</strong>: Security task failures will be silently ignored, allowing compromised builds to pass without detection.</li>
+<li><strong>Fix</strong>: Remove <code>onError: continue</code> from security tasks. Failures should block the pipeline.</li>
+</ul>
+<h3 id="tkn-logic-006-parameterized-step-image">TKN-LOGIC-006: Parameterized step image<a class="headerlink" href="#tkn-logic-006-parameterized-step-image" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: HIGH</li>
+<li><strong>CWE</strong>: CWE-94 (Improper Control of Generation of Code)</li>
+<li><strong>Applies to</strong>: Task, StepAction</li>
+<li><strong>Detect</strong>: Step or sidecar <code>image</code> containing <code>$(params.*)</code> or <code>$(inputs.*)</code> interpolation</li>
+<li><strong>Risk</strong>: A PipelineRun caller can override this parameter to run arbitrary code in the build environment.</li>
+<li><strong>Fix</strong>: Hardcode step images or validate the parameter against an allowlist.</li>
+</ul>
+<h3 id="tkn-logic-007-retries-on-security-task">TKN-LOGIC-007: Retries on security task<a class="headerlink" href="#tkn-logic-007-retries-on-security-task" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Severity</strong>: MEDIUM</li>
+<li><strong>CWE</strong>: CWE-693 (Protection Mechanism Failure)</li>
+<li><strong>Applies to</strong>: Pipeline</li>
+<li><strong>Detect</strong>: Security tasks (matching <code>security_task_patterns</code>) with <code>retries &gt;= 1</code></li>
+<li><strong>Risk</strong>: Retrying security scans can mask intermittent failures or allow flaky security checks to eventually pass.</li>
+<li><strong>Fix</strong>: Remove retries from security tasks. Security checks should fail deterministically.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright © Ugo Giordano
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/ugiordan/tekton-guard" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.top", "navigation.indexes", "navigation.instant", "navigation.path", "navigation.sections", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../assets/js/diagram-zoom.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
