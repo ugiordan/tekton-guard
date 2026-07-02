@@ -2,6 +2,10 @@
 
 **Static security analysis for Tekton pipeline definitions.**
 
+## Demo
+
+![Demo](images/demo.gif)
+
 tekton-guard combines 48 security checks with auto-fix capabilities to detect and remediate supply chain risks in Tekton pipelines. It catches what pattern-matching tools can't: transitive reference chains, resolver trust classification, cross-resource data flow, and CEL expression injection.
 
 <div class="grid cards" markdown>

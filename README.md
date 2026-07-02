@@ -4,6 +4,14 @@ Security scanner for Tekton pipeline definitions. Catches supply chain risks tha
 
 No dedicated Tekton security scanner existed before this tool.
 
+## Demo
+
+![tekton-guard Demo](site/docs/images/demo.gif)
+
+## Documentation
+
+Full documentation at [ugiordan.github.io/tekton-guard](https://ugiordan.github.io/tekton-guard/)
+
 ## What it checks
 
 48 checks across 12 categories:
@@ -73,10 +81,6 @@ tekton-guard /path/to/repo --policy-dir /path/to/policies/
 - `0`: no findings above threshold
 - `1`: findings above threshold
 - `2`: scanner error
-
-## Documentation
-
-Full docs at [ugiordan.github.io/tekton-guard](https://ugiordan.github.io/tekton-guard/)
 
 ## License
 
