@@ -6,7 +6,27 @@ No dedicated Tekton security scanner existed before this tool.
 
 ## Demo
 
-![tekton-guard Demo](site/docs/images/demo.gif)
+```console
+$ tekton-guard /path/to/repo --format text
+
+Tekton Security Scan: opendatahub-operator
+Found 8 issue(s)
+
+[HIGH] TKN-PIN-001: Mutable pipeline revision
+  File: .tekton/push.yaml:48
+  PipelineRun references pipeline with mutable revision 'main'
+  Fix: Pin revision to a 40-character commit SHA
+
+[HIGH] TKN-PIN-001: Mutable pipeline revision
+  File: .tekton/pull-request.yaml:48
+  PipelineRun references pipeline with mutable revision 'main'
+  Fix: Pin revision to a 40-character commit SHA
+
+[MEDIUM] TKN-RES-003: PaC-sourced parameter taint
+  File: .tekton/push.yaml:2
+  PipelineRun passes PaC template variables via param 'git-url'
+  Fix: Pass through environment variables instead of direct interpolation
+```
 
 ## Documentation
 
