@@ -394,3 +394,88 @@ class TestLimitDefaultSkip:
         findings = _run("edge-inline-specs.yaml", skip_checks=[])
         limit001 = [f for f in findings if f["rule_id"] == "TKN-LIMIT-001"]
         assert len(limit001) >= 1
+
+
+# -----------------------------------------------------------------------
+# Unknown resolver type (TKN-TRUST-007)
+# -----------------------------------------------------------------------
+
+class TestUnknownResolver:
+    """Custom/unknown resolver types should be flagged."""
+
+    def test_unknown_pipeline_resolver_flagged(self):
+        """PipelineRun with custom resolver should trigger TRUST-007."""
+        findings = _run("edge-unknown-resolver.yaml")
+        trust007 = [f for f in findings if f["rule_id"] == "TKN-TRUST-007"]
+        assert len(trust007) == 1
+        assert trust007[0]["resolver_type"] == "custom-magic-resolver"
+        assert trust007[0]["severity"] == "MEDIUM"
+
+    def test_known_resolver_not_flagged(self):
+        """Git resolver is known, should not trigger TRUST-007."""
+        findings = _run("pipelinerun-pinned.yaml")
+        trust007 = [f for f in findings if f["rule_id"] == "TKN-TRUST-007"]
+        assert len(trust007) == 0
+
+    def test_hub_resolver_not_flagged(self):
+        """Hub resolver is known, should not trigger TRUST-007."""
+        findings = _run("edge-workspace-complex.yaml")
+        trust007 = [f for f in findings if f["rule_id"] == "TKN-TRUST-007"]
+        assert len(trust007) == 0
+
+
+# -----------------------------------------------------------------------
+# Timeout mismatch (TKN-LIMIT-003)
+# -----------------------------------------------------------------------
+
+class TestTimeoutMismatch:
+    """Task timeout exceeding pipeline timeout should be flagged."""
+
+    def test_task_timeout_exceeds_pipeline_flagged(self):
+        """edge-timeout.yaml has pipeline=6h, tasks=4h. 4h < 6h so no mismatch."""
+        findings = _run("edge-timeout.yaml")
+        limit003 = [f for f in findings if f["rule_id"] == "TKN-LIMIT-003"]
+        # In edge-timeout.yaml: pipeline=6h, tasks=4h. tasks < pipeline so NOT flagged
+        assert len(limit003) == 0
+
+    def test_timeout_mismatch_direct(self):
+        """Direct test: task timeout > pipeline timeout should fire LIMIT-003."""
+        from tekton_guard.checks.limits import check_limit_003
+        from tekton_guard.parser import TektonResource
+        resource = TektonResource(
+            kind="PipelineRun", api_version="tekton.dev/v1",
+            name="mismatch-test", namespace="", file_path="test.yaml",
+            line_offset=1, raw={"spec": {"timeouts": {"pipeline": "1h", "tasks": "2h"}}},
+        )
+        config = ScannerConfig(skip_checks=[])
+        findings = check_limit_003(resource, config)
+        assert len(findings) == 1
+        assert findings[0]["rule_id"] == "TKN-LIMIT-003"
+        assert findings[0]["pipeline_timeout"] == "1h"
+        assert findings[0]["tasks_timeout"] == "2h"
+
+    def test_timeout_no_mismatch_clean(self):
+        """When task timeout <= pipeline timeout, no finding."""
+        from tekton_guard.checks.limits import check_limit_003
+        from tekton_guard.parser import TektonResource
+        resource = TektonResource(
+            kind="PipelineRun", api_version="tekton.dev/v1",
+            name="ok-test", namespace="", file_path="test.yaml",
+            line_offset=1, raw={"spec": {"timeouts": {"pipeline": "3h", "tasks": "2h"}}},
+        )
+        config = ScannerConfig(skip_checks=[])
+        findings = check_limit_003(resource, config)
+        assert len(findings) == 0
+
+    def test_timeout_no_tasks_timeout_clean(self):
+        """When tasks timeout is missing, no finding."""
+        from tekton_guard.checks.limits import check_limit_003
+        from tekton_guard.parser import TektonResource
+        resource = TektonResource(
+            kind="PipelineRun", api_version="tekton.dev/v1",
+            name="no-tasks", namespace="", file_path="test.yaml",
+            line_offset=1, raw={"spec": {"timeouts": {"pipeline": "3h"}}},
+        )
+        config = ScannerConfig(skip_checks=[])
+        findings = check_limit_003(resource, config)
+        assert len(findings) == 0

@@ -1,4 +1,4 @@
-"""Resource limit checks (TKN-LIMIT-001..002)."""
+"""Resource limit checks (TKN-LIMIT-001..003)."""
 
 from __future__ import annotations
 
@@ -93,3 +93,55 @@ def check_limit_002(resource: TektonResource, config: ScannerConfig) -> list[dic
                 extra={"timeout_type": "tasks", "timeout_value": str(tasks_timeout), "timeout_hours": hours},
             ))
     return findings
+
+
+@register_check
+def check_limit_003(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-LIMIT-003: Pipeline timeout shorter than task timeout."""
+    if resource.kind != "PipelineRun":
+        return []
+    raw_spec = resource.raw.get("spec", {})
+    timeouts = raw_spec.get("timeouts", {})
+    if not timeouts:
+        return []
+
+    pipeline_timeout = timeouts.get("pipeline", "")
+    tasks_timeout = timeouts.get("tasks", "")
+
+    if not pipeline_timeout or not tasks_timeout:
+        return []
+
+    def _parse_hours(val):
+        val = str(val).strip()
+        hours = 0.0
+        try:
+            if "h" in val:
+                parts = val.split("h")
+                hours += float(parts[0])
+                val = parts[1] if len(parts) > 1 else ""
+            if "m" in val:
+                parts = val.split("m")
+                hours += float(parts[0]) / 60
+                val = parts[1] if len(parts) > 1 else ""
+            if "s" in val:
+                parts = val.split("s")
+                hours += float(parts[0]) / 3600
+        except (ValueError, IndexError):
+            return 0
+        return hours
+
+    p_hours = _parse_hours(pipeline_timeout)
+    t_hours = _parse_hours(tasks_timeout)
+
+    if p_hours > 0 and t_hours > 0 and t_hours > p_hours:
+        return [_finding(
+            "TKN-LIMIT-003", "LOW", "Task timeout exceeds pipeline timeout",
+            resource, resource.line_offset,
+            f"PipelineRun '{resource.name}' has pipeline timeout '{pipeline_timeout}' "
+            f"but task timeout '{tasks_timeout}' is longer. Tasks may be killed "
+            f"mid-execution, potentially leaving partial artifacts.",
+            cwe="CWE-400",
+            remediation="Ensure pipeline timeout >= task timeout.",
+            extra={"pipeline_timeout": str(pipeline_timeout), "tasks_timeout": str(tasks_timeout)},
+        )]
+    return []

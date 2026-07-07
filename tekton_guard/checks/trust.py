@@ -1,4 +1,4 @@
-"""Trust checks (TKN-TRUST-001..006)."""
+"""Trust checks (TKN-TRUST-001..007)."""
 
 from __future__ import annotations
 
@@ -196,4 +196,43 @@ def check_trust_006(resources: list, config: ScannerConfig) -> list[dict]:
                     remediation="Create a VerificationPolicy with a resourcePattern covering this bundle's registry.",
                     extra={"task_name": pt.name, "bundle": bundle},
                 ))
+    return findings
+
+
+_KNOWN_RESOLVERS = {"git", "bundles", "hub", "cluster", "http"}
+
+
+@register_check
+def check_trust_007(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRUST-007: Unknown resolver type."""
+    findings = []
+
+    if resource.pipeline_ref and resource.pipeline_ref.resolver_type:
+        if resource.pipeline_ref.resolver_type not in _KNOWN_RESOLVERS:
+            findings.append(_finding(
+                "TKN-TRUST-007", "MEDIUM", "Unknown resolver type",
+                resource, resource.pipeline_ref.line,
+                f"PipelineRun '{resource.name}' uses unknown resolver type "
+                f"'{resource.pipeline_ref.resolver_type}'. Custom resolvers "
+                f"can execute arbitrary code and their behavior is unverifiable "
+                f"by static analysis.",
+                cwe="CWE-829",
+                remediation="Use a known resolver type (git, bundles, hub, cluster, http) or document the custom resolver's security properties.",
+                extra={"resolver_type": resource.pipeline_ref.resolver_type},
+            ))
+
+    for pt in resource.pipeline_tasks + resource.finally_tasks:
+        if pt.task_ref and pt.task_ref.resolver:
+            ref = pt.task_ref.resolver
+            if ref.resolver_type and ref.resolver_type not in _KNOWN_RESOLVERS:
+                findings.append(_finding(
+                    "TKN-TRUST-007", "MEDIUM", "Unknown resolver type",
+                    resource, ref.line,
+                    f"Pipeline task '{pt.name}' uses unknown resolver type "
+                    f"'{ref.resolver_type}'. Custom resolvers are unverifiable.",
+                    cwe="CWE-829",
+                    remediation="Use a known resolver type or document the custom resolver.",
+                    extra={"resolver_type": ref.resolver_type, "task_name": pt.name},
+                ))
+
     return findings

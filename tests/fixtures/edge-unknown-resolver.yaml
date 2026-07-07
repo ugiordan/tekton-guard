@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: custom-resolver-run
+spec:
+  pipelineRef:
+    resolver: custom-magic-resolver
+    params:
+    - name: url
+      value: https://example.com/pipeline.yaml
+  taskRunTemplate:
+    serviceAccountName: test-sa
