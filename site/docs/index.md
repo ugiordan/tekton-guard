@@ -1,122 +1,168 @@
 # tekton-guard
 
-**Static security analysis for Tekton pipeline definitions.**
+Static security analysis for Tekton pipeline definitions
+
+[Get Started](getting-started/installation.md){ .md-button .md-button--primary }
+[GitHub](https://github.com/ugiordan/tekton-guard){ .md-button }
+
+---
 
 ## Demo
 
-![tekton-guard Demo](images/demo.gif)
+![tekton-guard demo](images/demo.gif)
 
-tekton-guard combines 48 security checks with auto-fix capabilities to detect and remediate supply chain risks in Tekton pipelines. It catches what pattern-matching tools can't: transitive reference chains, resolver trust classification, cross-resource data flow, and CEL expression injection.
+---
 
-<div class="grid cards" markdown>
+## How It Works
 
-- :material-shield-check: **48 Security Checks** across 12 categories
-- :material-wrench: **Auto-Fix Engine** pins mutable refs to SHAs
-- :material-source-branch: **CI/CD Integration** with SARIF and baseline suppression
-- :material-graph: **Dependency Graph** with blast radius analysis
-
-</div>
+tekton-guard parses Tekton CRDs (PipelineRun, Pipeline, Task, StepAction, TriggerTemplate, EventListener) and runs 48 security checks covering supply chain integrity, trust classification, and pipeline logic manipulation.
 
 ```mermaid
 graph LR
-    A[".tekton/*.yaml"] --> B["Parser<br/>(ruamel.yaml)"]
-    B --> C["48 Security Checks"]
-    C --> D{Findings?}
-    D -->|Yes| E["JSON / SARIF / Text"]
-    D -->|No| F["Exit 0 ✓"]
-    
-    G["--resolve"] -.-> B
-    H["--fix"] -.-> I["Auto-Fix Engine"]
+    subgraph Input
+        A[".tekton/*.yaml"]
+    end
+
+    subgraph "tekton-guard"
+        B[Parser] --> C[48 Security Checks]
+        C --> D[FP Suppression]
+    end
+
+    subgraph Output
+        E[JSON]
+        F[SARIF 2.1.0]
+        G[Text]
+    end
+
+    subgraph Optional
+        H["--resolve"]
+        I["--fix"]
+        J["--graph"]
+    end
+
+    A --> B
+    D --> E
+    D --> F
+    D --> G
+    H -.-> B
     I -.-> A
-    J["--graph"] -.-> K["Dependency Graph"]
-    K -.-> L["Blast Radius"]
-    
-    style A fill:#f9f,stroke:#333
-    style C fill:#ff9,stroke:#333
-    style E fill:#9f9,stroke:#333
-    style I fill:#9ff,stroke:#333
+    J -.-> B
 ```
 
-## Key Capabilities
+**Pipeline:**
 
-- **48 security checks** across 12 categories, from CRITICAL (CEL injection, runtime socket mounts) to INFO (provenance annotations)
-- **Auto-fix engine** resolves mutable git refs to pinned SHAs via GitHub API, adds readOnly to secret workspaces
-- **CI/CD integration** with GitHub Action, SARIF upload, baseline suppression, and diff-only scanning
-- **Cross-repo resolution** follows git resolver URLs to scan remote Pipeline and Task definitions
-- **Dependency graph** maps pipeline reference chains with blast radius analysis and cycle detection
-- **PaC-aware** false positive suppression for PipelinesAsCode template variables and Konflux patterns
+1. **Parser** loads Tekton YAML with ruamel.yaml, handles PaC template variables, multi-document files, and 10 CRD kinds
+2. **48 Security Checks** across 12 categories detect pinning, trust, injection, privilege, trigger, and logic issues
+3. **FP Suppression** filters PaC templates, Konflux patterns, and configurable safe lists
+4. **Optional**: `--resolve` follows git resolvers, `--fix` auto-pins mutable refs, `--graph` maps blast radius
 
-## What It Checks
+---
 
-| Category | Checks | What It Catches |
-|----------|--------|-----------------|
-| **Pinning** | TKN-PIN-001..005 | Mutable pipeline/task/StepAction refs, unpinned bundles, mutable step images |
-| **Trust** | TKN-TRUST-001..006 | Untrusted git/hub sources, unverified cluster tasks, HTTP resolver without digest, cluster resolver in shared namespaces, bundles without VerificationPolicy |
-| **ServiceAccount** | TKN-SA-001..002 | Default or missing SA on PipelineRuns |
-| **Workspace** | TKN-WS-001..002 | Secret workspaces without readOnly, shared workspaces with untrusted tasks |
-| **Result Injection** | TKN-RES-001..003 | Script/args interpolation injection, PaC parameter taint |
-| **Security Context** | TKN-SEC-001..002 | Privileged containers, root user, privilege escalation |
-| **Volume Mounts** | TKN-VOL-001..002 | Host path mounts, container runtime socket access (CRITICAL) |
-| **Trigger Security** | TKN-TRIG-001..009 | CEL injection (CRITICAL), permissive triggers, security task skip, TriggerTemplate param injection, EventListener without interceptor/TLS/SA, PaC Repository branch restrictions, sensitive TriggerBinding fields |
-| **Exfiltration** | TKN-EXFIL-001..002 | Secret access + network tools, network tool detection |
-| **Resource Limits** | TKN-LIMIT-002 | Excessive pipeline/task timeouts |
-| **Chains Readiness** | TKN-CHAIN-001..006 | Missing provenance annotations, unanchored VerificationPolicy regex, untrusted Chains result producers, missing SBOM task, onError continue on result producers |
-| **Pipeline Logic** | TKN-LOGIC-001..007 | Security tasks not in finally block, overridable security params, TOCTOU via parallel workspaces, missing finally block, onError continue on security tasks, parameterized step images, retries on security tasks |
-
-!!! info "No existing Tekton security scanner"
-    Research across open source, commercial tools, policy engines, and the Tekton community confirmed no dedicated Tekton pipeline security scanner existed before tekton-guard. The industry invested in GitHub Actions security (Zizmor, StepSecurity) but nothing equivalent for Tekton, despite it being the CNCF-standard pipeline engine and the foundation of Red Hat's build infrastructure (Konflux, OpenShift Pipelines).
-
-## Quick Start
+## Quick Example
 
 ```bash
-# Install
-pip install git+https://github.com/ugiordan/tekton-guard.git
-
-# Scan a repository
-tekton-guard /path/to/repo --format text
-
-# Auto-fix mutable refs
-GITHUB_TOKEN=ghp_... tekton-guard /path/to/repo --fix --format text
+$ tekton-guard .tekton/push.yaml --format text
 ```
 
-!!! example "Sample output"
-    ```
-    Tekton Security Scan: /path/to/repo
-    Found 6 issue(s)
+```
+Tekton Security Scan: .tekton/push.yaml
+Found 4 issue(s)
 
-    [CRITICAL] TKN-TRIG-001: CEL expression references user-controlled webhook fields
-      File: .tekton/pr-check.yaml:12
-      PipelineRun has a CEL expression referencing user-controlled webhook
-      body fields: body.pull_request.title. An attacker can craft a PR title
-      to inject code.
-      Fix: Avoid referencing user-controlled body fields in CEL expressions.
+[HIGH] TKN-PIN-001: Mutable pipeline revision
+  File: .tekton/push.yaml:48
+  PipelineRun references pipeline with mutable revision 'main'
+  Fix: Pin revision to a 40-character commit SHA
 
-    [HIGH] TKN-PIN-001: Mutable pipeline revision
-      File: .tekton/push.yaml:49
-      PipelineRun references pipeline via git resolver with mutable
-      revision 'main' instead of a pinned commit SHA.
-      Fix: Pin revision to a 40-character commit SHA.
+[MEDIUM] TKN-RES-003: PaC-sourced parameter taint
+  File: .tekton/push.yaml:2
+  PipelineRun passes PaC template variables via param 'git-url'
+  Fix: Pass through environment variables instead of direct interpolation
+```
 
-    [HIGH] TKN-TRUST-001: Pipeline from untrusted source
-      File: .tekton/push.yaml:49
-      PipelineRun references a pipeline from an untrusted git source.
-      Fix: Use a pipeline from a trusted source or update config.
-    ```
+Generate SARIF for GitHub Code Scanning:
 
-## Quick Links
+```bash
+tekton-guard /path/to/repo --format sarif --output results.sarif
+```
 
-### Getting Started
-- **[Installation](getting-started/installation.md)** - Install from source in 30 seconds
-- **[Quick Start](getting-started/quickstart.md)** - Scan, fix, and gate your first pipeline
+---
 
-### Guides
-- **[CI Integration](guides/ci-integration.md)** - GitHub Action, SARIF upload, PR gating
-- **[Configuration](guides/configuration.md)** - Trust lists, check tuning, workspace suppression
-- **[False Positive Tuning](guides/false-positives.md)** - PaC templates, baseline management
-- **[Cross-Repo Resolution](guides/cross-repo.md)** - Follow git resolver references
-- **[Understanding Findings](guides/findings.md)** - Severity scale, finding structure, examples
+## Comparison
 
-### Reference
-- **[Detection Rules](reference/rules.md)** - All 48 checks with severity, CWE, and remediation
-- **[CLI Commands](reference/cli.md)** - Full flag reference including --fix, --baseline, --graph
-- **[Output Formats](reference/output-formats.md)** - JSON, SARIF 2.1.0, text
+| Tool | Tekton Semantic | Cross-Resource | Auto-Fix | Supply Chain |
+|------|:-:|:-:|:-:|:-:|
+| **tekton-guard** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Semgrep | :x: | :x: | :x: | :x: |
+| kube-linter | :x: | :x: | :x: | :x: |
+| Enterprise Contract | :x: | :x: | :x: | :white_check_mark: |
+| IBM/tekton-lint | :white_check_mark: | :x: | :x: | :x: |
+
+tekton-guard is the only tool that performs **semantic security analysis** of Tekton pipeline definitions with cross-resource correlation, auto-fix, and supply chain integrity checks.
+
+---
+
+## Features
+
+<div class="grid cards" markdown>
+
+-   :material-link-lock:{ .lg .middle } **Supply Chain Integrity**
+
+    ---
+
+    Validates pinning across Pipeline -> Task -> StepAction chains. Detects mutable refs, untrusted sources, and unpinned bundles at every level.
+
+-   :material-auto-fix:{ .lg .middle } **Auto-Fix Engine**
+
+    ---
+
+    Resolves mutable git refs to SHA via GitHub API. Pins container images to digests via OCI registry API. Atomic file writes.
+
+-   :material-shield-alert:{ .lg .middle } **Pipeline Logic Analysis**
+
+    ---
+
+    Detects security tasks not in finally blocks, onError:continue bypasses, TOCTOU via parallel workspace access, and parameterized step images.
+
+-   :material-source-branch:{ .lg .middle } **Cross-Repo Resolution**
+
+    ---
+
+    Follows git resolver URLs to fetch and scan remote Pipeline/Task definitions. Maps dependency graphs with blast radius analysis.
+
+</div>
+
+---
+
+## What Gets Detected
+
+48 checks across 12 categories:
+
+| Category | Checks | Examples |
+|----------|--------|---------|
+| **Pinning** | TKN-PIN-001..005 | Mutable pipeline/task/StepAction refs, unpinned bundles |
+| **Trust** | TKN-TRUST-001..006 | Untrusted sources, HTTP resolver without digest, shared namespace |
+| **ServiceAccount** | TKN-SA-001..002 | Default or missing SA |
+| **Workspace** | TKN-WS-001..002 | Secret without readOnly, shared with untrusted tasks |
+| **Result Injection** | TKN-RES-001..003 | Script injection, PaC parameter taint |
+| **Security Context** | TKN-SEC-001..002 | Privileged containers, root user |
+| **Volume Mounts** | TKN-VOL-001..002 | Host path, container runtime socket |
+| **Trigger Security** | TKN-TRIG-001..009 | CEL injection, TriggerTemplate, EventListener, PaC Repository |
+| **Exfiltration** | TKN-EXFIL-001..002 | Secret access + network tools |
+| **Resource Limits** | TKN-LIMIT-001..002 | Missing resources, excessive timeouts |
+| **Chains Readiness** | TKN-CHAIN-001..006 | VerificationPolicy regex, result poisoning, SBOM |
+| **Pipeline Logic** | TKN-LOGIC-001..007 | Finally block, onError, parameterized images, TOCTOU |
+
+See [Detection Rules](reference/rules.md) for the full reference.
+
+---
+
+## Next Steps
+
+<div class="grid cards" markdown>
+
+-   [Installation Guide](getting-started/installation.md)
+-   [Quick Start Tutorial](getting-started/quickstart.md)
+-   [CI Integration](guides/ci-integration.md)
+-   [Detection Rules Reference](reference/rules.md)
+
+</div>
