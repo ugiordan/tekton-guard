@@ -49,6 +49,7 @@ class ScannerConfig:
         "git-url", "revision", "output-image", "dockerfile",
         "path-context", "build-platforms", "image-expires-after",
         "build-version-tag", "pipeline-type",
+        "additional-tags", "additional-tag",
     ])
 
     def is_trusted_git_source(self, url: str) -> bool:

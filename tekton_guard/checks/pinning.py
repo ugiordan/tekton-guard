@@ -22,8 +22,18 @@ def check_pin_001(resource: TektonResource, config: ScannerConfig) -> list[dict]
         return []
     if _is_pac_template(rev):
         return []
+    # Trusted source with mutable ref is lower risk than untrusted + mutable.
+    # Same-org self-references (e.g., Konflux PipelineRuns pointing at their
+    # own repo) still need pinning for SLSA L3, but the blast radius of a
+    # compromised branch is smaller when the source is already trusted.
+    if config.is_trusted_git_source(ref.url):
+        severity = "MEDIUM"
+        title = "Mutable pipeline revision (trusted source)"
+    else:
+        severity = "HIGH"
+        title = "Mutable pipeline revision"
     return [_finding(
-        "TKN-PIN-001", "HIGH", "Mutable pipeline revision", resource, ref.line,
+        "TKN-PIN-001", severity, title, resource, ref.line,
         f"PipelineRun '{resource.name}' references pipeline via git resolver with "
         f"mutable revision '{rev}' instead of a pinned commit SHA. A push to "
         f"'{rev}' in the referenced repo can alter the build pipeline without "

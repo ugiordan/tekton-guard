@@ -33,3 +33,13 @@ known_safe_pac_params:
   - "image-expires-after"
   - "build-version-tag"
   - "pipeline-type"
+  - "additional-tags"
+  - "additional-tag"
+
+# Konflux-specific suppression:
+# TKN-LOGIC-001 flags security tasks in spec.tasks (not spec.finally).
+# In Konflux repos, this is by design: Enterprise Contract validates
+# task results post-build, so security tasks run in the main pipeline.
+# Uncomment to suppress for Konflux repos:
+# skip_checks:
+#   - "TKN-LOGIC-001"

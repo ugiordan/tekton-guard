@@ -30,6 +30,14 @@ class TestPinning:
         assert pin["severity"] == "HIGH"
         assert pin["current_value"] == "main"
 
+    def test_mutable_pipeline_ref_trusted_source_medium(self):
+        """Trusted source + mutable ref should be MEDIUM, not HIGH."""
+        findings = _run("edge-sneaky-refs.yaml")
+        pin = [f for f in findings if f["rule_id"] == "TKN-PIN-001"
+               and f["resource_name"] == "sneaky-refs-test"][0]
+        assert pin["severity"] == "MEDIUM"
+        assert "trusted source" in pin["title"]
+
     def test_pinned_pipeline_ref_clean(self):
         findings = _run("pipelinerun-pinned.yaml")
         assert "TKN-PIN-001" not in _rule_ids(findings)
