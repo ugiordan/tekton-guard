@@ -1,0 +1,8 @@
+- id: tekton-guard
+  name: tekton-guard
+  description: Scan Tekton pipeline definitions for security issues
+  entry: python -m tekton_guard
+  language: python
+  types: [yaml]
+  files: \.tekton/
+  additional_dependencies: ['ruamel.yaml>=0.18']

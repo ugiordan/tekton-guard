@@ -116,4 +116,14 @@ def format_text(findings: list[dict[str, Any]], target: str) -> str:
         if f.get("remediation"):
             lines.append(f"  Fix: {f['remediation']}")
         lines.append("")
+
+    if findings:
+        sev_counts = Counter(f["severity"] for f in findings)
+        summary_parts = []
+        for sev in ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]:
+            if sev_counts.get(sev, 0) > 0:
+                summary_parts.append(f"{sev_counts[sev]} {sev}")
+        lines.append(f"Summary: {', '.join(summary_parts)}")
+        lines.append("")
+
     return "\n".join(lines)

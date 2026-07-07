@@ -59,6 +59,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "target",
+        nargs="?",
+        default=None,
         help="Path to a repo directory (scans .tekton/) or a single YAML file",
     )
     parser.add_argument(
@@ -158,8 +160,37 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Directory containing VerificationPolicy YAML files (for TKN-TRUST-006).",
     )
+    parser.add_argument(
+        "--explain",
+        default=None,
+        metavar="RULE_ID",
+        help="Show detailed information about a specific check rule",
+    )
 
     args = parser.parse_args(argv)
+
+    if args.explain:
+        from tekton_guard.checks._common import get_all_checks, get_all_correlation_checks
+        rule = args.explain.upper()
+        for check_fn in get_all_checks():
+            check_id = getattr(check_fn, 'check_id', '')
+            if check_id == rule:
+                doc = check_fn.__doc__ or ''
+                print(f"\n{check_id}: {doc.split(':', 1)[1].strip() if ':' in doc else doc}")
+                print(f"\nDocs: https://ugiordan.github.io/tekton-guard/reference/rules/#{rule.lower()}")
+                return 0
+        for check_fn in get_all_correlation_checks():
+            check_id = getattr(check_fn, 'check_id', '')
+            if check_id == rule:
+                doc = check_fn.__doc__ or ''
+                print(f"\n{check_id}: {doc.split(':', 1)[1].strip() if ':' in doc else doc}")
+                print(f"\nDocs: https://ugiordan.github.io/tekton-guard/reference/rules/#{rule.lower()}")
+                return 0
+        print(f"Unknown rule: {rule}", file=sys.stderr)
+        return 2
+
+    if not args.target:
+        parser.error("the following arguments are required: target")
 
     config = load_config(args.config)
     if args.min_severity:

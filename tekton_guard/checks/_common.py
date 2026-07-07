@@ -24,6 +24,9 @@ _REGISTRY: list[CheckFn] = []
 
 def register_check(func: CheckFn) -> CheckFn:
     """Decorator that registers a check function."""
+    doc = func.__doc__ or ""
+    colon_pos = doc.find(":")
+    func.check_id = doc[:colon_pos].strip() if colon_pos > 0 else ""  # type: ignore[attr-defined]
     _REGISTRY.append(func)
     return func
 
@@ -37,6 +40,9 @@ _CORRELATION_REGISTRY: list[CorrelationCheckFn] = []
 
 
 def register_correlation_check(func: CorrelationCheckFn) -> CorrelationCheckFn:
+    doc = func.__doc__ or ""
+    colon_pos = doc.find(":")
+    func.check_id = doc[:colon_pos].strip() if colon_pos > 0 else ""  # type: ignore[attr-defined]
     _CORRELATION_REGISTRY.append(func)
     return func
 
@@ -62,6 +68,7 @@ def _finding(
     remediation: str = "",
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    docs_url = f"https://ugiordan.github.io/tekton-guard/reference/rules/#{rule_id.lower()}"
     result = {
         "rule_id": rule_id,
         "severity": severity,
@@ -74,6 +81,7 @@ def _finding(
         "resource_name": resource.name,
         "cwe": cwe,
         "remediation": remediation,
+        "docs_url": docs_url,
     }
     if extra:
         result.update(extra)
