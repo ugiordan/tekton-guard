@@ -167,6 +167,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Glob patterns to exclude from scanning (e.g., '*/tests/*' '*/samples/*')",
     )
     parser.add_argument(
+        "--blast-radius",
+        default=None,
+        metavar="REPO_ID",
+        help="Show which repos are affected by a vulnerability in REPO_ID (e.g., 'opendatahub-io/odh-konflux-central'). Requires --graph data.",
+    )
+    parser.add_argument(
         "--explain",
         default=None,
         metavar="RULE_ID",
@@ -268,6 +274,21 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Graph written: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges", file=sys.stderr)
         if cycles:
             print(f"WARNING: {len(cycles)} cycle(s) detected!", file=sys.stderr)
+
+    if args.blast_radius:
+        from tekton_guard.graph import build_dependency_graph, compute_blast_radius_for_finding
+        if not args.graph:
+            graph = build_dependency_graph(resources)
+        blast = compute_blast_radius_for_finding(graph, args.blast_radius)
+        print(f"\nBlast radius for {blast['source']}:", file=sys.stderr)
+        print(f"  Affected repos: {blast['affected_count']}", file=sys.stderr)
+        for repo in blast['affected_repos']:
+            print(f"    - {repo}", file=sys.stderr)
+        unpinned = blast['unpinned_edges']
+        if unpinned:
+            print(f"  Unpinned references: {len(unpinned)}", file=sys.stderr)
+            for e in unpinned[:5]:
+                print(f"    - {e['from']} -> {e['ref']}", file=sys.stderr)
 
     if args.verify_pins:
         from tekton_guard.fixer import verify_pins

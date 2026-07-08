@@ -64,6 +64,27 @@ def calculate_blast_radius(graph: dict[str, Any]) -> dict[str, int]:
     return {source: len(consumers) for source, consumers in source_consumers.items()}
 
 
+def compute_blast_radius_for_finding(
+    graph: dict[str, Any],
+    source_repo: str,
+) -> dict[str, Any]:
+    """Given a source repo with a vulnerability, find all downstream consumers."""
+    consumers = set()
+    for edge in graph.get("edges", []):
+        if edge["to"] == source_repo:
+            consumers.add(edge["from"])
+
+    return {
+        "source": source_repo,
+        "affected_repos": sorted(consumers),
+        "affected_count": len(consumers),
+        "unpinned_edges": [
+            e for e in graph.get("edges", [])
+            if e["to"] == source_repo and not e.get("pinned", False)
+        ],
+    }
+
+
 def detect_cycles(graph: dict[str, Any]) -> list[list[str]]:
     """Detect cycles in the dependency graph using DFS."""
     adjacency: dict[str, list[str]] = {}

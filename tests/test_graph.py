@@ -3,6 +3,7 @@
 from tekton_guard.graph import (
     build_dependency_graph,
     calculate_blast_radius,
+    compute_blast_radius_for_finding,
     detect_cycles,
     _url_to_repo_id,
     _extract_repo_id,
@@ -53,6 +54,24 @@ def test_blast_radius():
     graph = build_dependency_graph(resources)
     blast = calculate_blast_radius(graph)
     assert blast["org/shared"] == 3
+
+
+def test_compute_blast_radius_for_finding():
+    resources = [
+        _make_pipelinerun("pr1", "/repos/org/repo-a/.tekton/push.yaml",
+                         "https://github.com/org/shared.git", "main", "p.yaml"),
+        _make_pipelinerun("pr2", "/repos/org/repo-b/.tekton/push.yaml",
+                         "https://github.com/org/shared.git", "main", "p.yaml"),
+        _make_pipelinerun("pr3", "/repos/org/repo-c/.tekton/push.yaml",
+                         "https://github.com/org/shared.git", "main", "p.yaml"),
+    ]
+    graph = build_dependency_graph(resources)
+    blast = compute_blast_radius_for_finding(graph, "org/shared")
+    assert blast["affected_count"] == 3
+    assert "org/repo-a" in blast["affected_repos"]
+    assert "org/repo-b" in blast["affected_repos"]
+    assert "org/repo-c" in blast["affected_repos"]
+    assert len(blast["unpinned_edges"]) == 3
 
 
 def test_no_cycles():
