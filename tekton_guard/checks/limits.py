@@ -50,6 +50,11 @@ def check_limit_002(resource: TektonResource, config: ScannerConfig) -> list[dic
         if not val:
             return 0
         val = str(val).strip()
+        if val and not any(c in val for c in "hms"):
+            try:
+                return float(val) / 3600
+            except ValueError:
+                return 0
         hours = 0.0
         try:
             if "h" in val:

@@ -34,7 +34,8 @@ def check_sec_002(resource: TektonResource, config: ScannerConfig) -> list[dict]
     findings = []
     for ci in collect_all_containers(resource):
         sc = ci.container.security_context
-        is_root = sc.get("runAsUser") == 0
+        run_as_user = sc.get("runAsUser")
+        is_root = run_as_user == 0 or str(run_as_user) == "0"
         allows_escalation = sc.get("allowPrivilegeEscalation") is True
         if not is_root and not allows_escalation:
             continue

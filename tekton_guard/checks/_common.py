@@ -13,7 +13,7 @@ from tekton_guard.parser import (
 )
 
 PARAM_INTERP_RE = re.compile(r"\$\((?:params|tasks)\.[^)]+\)")
-PAC_TEMPLATE_RE = re.compile(r"^\{\{.*\}\}$")
+PAC_TEMPLATE_RE = re.compile(r"^\{\{\s*[a-zA-Z_][a-zA-Z0-9_.]*\s*\}\}$")
 
 SEVERITY_ORDER = {"INFO": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
 

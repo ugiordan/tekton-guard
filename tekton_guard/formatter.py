@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
@@ -68,13 +69,19 @@ def format_sarif(findings: list[dict[str, Any]], target: str) -> str:
             if f.get("cwe"):
                 rules_seen[rule_id]["properties"]["cwe"] = f["cwe"]
 
+        file_path = f["file"]
+        if not file_path.startswith("remote:"):
+            artifact_uri = os.path.relpath(file_path, target) if os.path.isabs(file_path) else file_path
+        else:
+            artifact_uri = file_path
+
         result: dict[str, Any] = {
             "ruleId": rule_id,
             "level": _SARIF_LEVEL.get(f["severity"], "warning"),
             "message": {"text": f["message"]},
             "locations": [{
                 "physicalLocation": {
-                    "artifactLocation": {"uri": f["file"]},
+                    "artifactLocation": {"uri": artifact_uri},
                     "region": {
                         "startLine": max(f.get("line_start", 1), 1),
                         "endLine": max(f.get("line_end", f.get("line_start", 1)), 1),
@@ -82,6 +89,8 @@ def format_sarif(findings: list[dict[str, Any]], target: str) -> str:
                 },
             }],
         }
+        rule_ids_list = list(rules_seen.keys())
+        result["ruleIndex"] = rule_ids_list.index(rule_id)
         if f.get("remediation"):
             result["fixes"] = [{"description": {"text": f["remediation"]}}]
         results.append(result)

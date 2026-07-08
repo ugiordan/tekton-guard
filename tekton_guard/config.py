@@ -68,7 +68,8 @@ class ScannerConfig:
         if not image:
             return False
         for trusted in self.trusted_registries:
-            if image.startswith(trusted):
+            prefix = trusted if trusted.endswith("/") else trusted + "/"
+            if image.startswith(prefix):
                 return True
         return False
 

@@ -77,7 +77,7 @@ def check_logic_003(resource: TektonResource, config: ScannerConfig) -> list[dic
     workspace_users: dict[str, list[str]] = {}
     task_run_after: dict[str, set[str]] = {}
 
-    for pt in resource.pipeline_tasks:
+    for pt in resource.pipeline_tasks + resource.finally_tasks:
         task_run_after[pt.name] = set(pt.run_after)
         for ws in pt.workspaces:
             ws_name = ws.workspace
@@ -110,8 +110,9 @@ def check_logic_003(resource: TektonResource, config: ScannerConfig) -> list[dic
                     continue  # transitively ordered
 
                 # Check if either is untrusted
-                t1_pt = next((pt for pt in resource.pipeline_tasks if pt.name == t1), None)
-                t2_pt = next((pt for pt in resource.pipeline_tasks if pt.name == t2), None)
+                all_tasks = resource.pipeline_tasks + resource.finally_tasks
+                t1_pt = next((pt for pt in all_tasks if pt.name == t1), None)
+                t2_pt = next((pt for pt in all_tasks if pt.name == t2), None)
 
                 untrusted_name = None
                 for pt in [t1_pt, t2_pt]:

@@ -17,17 +17,19 @@ _DEV_TCP_RE = re.compile(r"/dev/tcp/")
 @register_check
 def check_exfil_001(resource: TektonResource, config: ScannerConfig) -> list[dict]:
     """TKN-EXFIL-001: Task with secret access and network-capable scripts."""
-    if resource.kind not in ("Task", "StepAction", "PipelineRun", "TaskRun"):
+    if resource.kind not in ("Task", "StepAction", "PipelineRun", "TaskRun", "Pipeline"):
         return []
 
     has_secret = False
+    # Check workspace-level secrets
     for ws in resource.workspaces:
         if ws.secret_name:
             has_secret = True
             break
+    # Check env-level secretKeyRef across ALL containers (steps, sidecars, embedded)
     if not has_secret:
-        for step in resource.steps + resource.sidecars:
-            for env_entry in step.env:
+        for ci in collect_all_containers(resource):
+            for env_entry in ci.container.env:
                 if isinstance(env_entry, dict):
                     value_from = env_entry.get("valueFrom", {})
                     if isinstance(value_from, dict) and "secretKeyRef" in value_from:
@@ -35,6 +37,14 @@ def check_exfil_001(resource: TektonResource, config: ScannerConfig) -> list[dic
                         break
             if has_secret:
                 break
+    # Check volume-mounted secrets in raw spec
+    if not has_secret:
+        raw_spec = resource.raw.get("spec", {})
+        for vol in raw_spec.get("volumes", []):
+            if isinstance(vol, dict) and isinstance(vol.get("secret"), dict):
+                if vol["secret"].get("secretName"):
+                    has_secret = True
+                    break
 
     if not has_secret:
         return []

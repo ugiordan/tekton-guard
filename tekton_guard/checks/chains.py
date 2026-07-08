@@ -191,4 +191,20 @@ def check_chain_006(resource: TektonResource, config: ScannerConfig) -> list[dic
                         extra={"task_name": name},
                     ))
                     break
+        # Name-based heuristic for tasks without inline taskSpec
+        if not task_spec:
+            name_lower = name.lower()
+            if any(kw in name_lower for kw in ("build", "push", "image", "container")):
+                findings.append(_finding(
+                    "TKN-CHAIN-006", "MEDIUM",
+                    "Potential Chains result producer with onError continue",
+                    resource, resource.line_offset,
+                    f"Task '{name}' has onError: continue and its name suggests it "
+                    f"may produce build/image results consumed by Tekton Chains. "
+                    f"If this task produces IMAGE_URL/IMAGE_DIGEST, failing silently "
+                    f"could lead to invalid attestations.",
+                    cwe="CWE-345",
+                    remediation="Remove onError: continue from tasks that produce IMAGE_URL/IMAGE_DIGEST results.",
+                    extra={"task_name": name},
+                ))
     return findings

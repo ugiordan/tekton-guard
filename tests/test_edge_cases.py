@@ -283,11 +283,11 @@ class TestPaCTemplateEdgeCases:
         # PAC_TEMPLATE_RE is r"^\{\{.*\}\}$" which matches anything in {{ }}
         assert _is_pac_template("{{ foo.bar }}")
 
-    def test_expression_pac_detected(self):
-        """{{ foo + bar }} matches the broad PAC_TEMPLATE_RE pattern."""
+    def test_expression_pac_not_detected(self):
+        """{{ foo + bar }} is NOT a valid PAC template (stricter regex requires valid variable names)."""
         from tekton_guard.checks._common import _is_pac_template
-        # The regex matches any content between {{ }}
-        assert _is_pac_template("{{ foo + bar }}")
+        # Stricter PAC_TEMPLATE_RE requires valid identifier chars only
+        assert not _is_pac_template("{{ foo + bar }}")
 
 
 # -----------------------------------------------------------------------

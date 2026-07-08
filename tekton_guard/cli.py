@@ -24,15 +24,17 @@ def _create_fix_pr(total_fixed: int, total_skipped: int) -> None:
 
     try:
         existing = subprocess.run(
-            ["gh", "pr", "list", "--head", "tekton-guard/auto-pin", "--json", "number"],
+            ["gh", "pr", "list", "--json", "number,headRefName", "--state", "open"],
             capture_output=True, text=True, timeout=15,
         )
-        if existing.returncode == 0 and existing.stdout.strip() not in ("", "[]"):
-            print("Auto-fix PR already exists, skipping creation", file=sys.stderr)
-            return
+        if existing.returncode == 0:
+            prs = json.loads(existing.stdout or "[]")
+            if any(pr.get("headRefName", "").startswith("tekton-guard/auto-pin") for pr in prs):
+                print("Auto-fix PR already exists, skipping creation", file=sys.stderr)
+                return
 
         subprocess.run(["git", "checkout", "-b", branch], capture_output=True, check=True, timeout=10)
-        subprocess.run(["git", "add", ".tekton/"], capture_output=True, check=True, timeout=10)
+        subprocess.run(["git", "add", "--update", ".tekton/"], capture_output=True, check=True, timeout=10)
         subprocess.run(
             ["git", "commit", "-m", f"fix: auto-pin {total_fixed} mutable Tekton refs\n\nApplied by tekton-guard --fix --create-pr"],
             capture_output=True, check=True, timeout=10,
@@ -341,7 +343,7 @@ def main(argv: list[str] | None = None) -> int:
             original_count = len(findings)
             findings = [f for f in findings if (
                 f["rule_id"], f["file"],
-                hashlib.sha256(f"{f.get('current_value', f.get('message', ''))}:{f.get('line_start', 0)}".encode()).hexdigest()[:16]
+                hashlib.sha256(f"{f.get('current_value', f.get('message', ''))}:{f.get('resource_name', '')}:{f.get('line_start', 0)}".encode()).hexdigest()[:16]
             ) not in baseline_keys]
             suppressed = original_count - len(findings)
             if suppressed:
@@ -356,7 +358,7 @@ def main(argv: list[str] | None = None) -> int:
             "findings": []
         }
         for f in findings:
-            hash_input = f"{f.get('current_value', f.get('message', ''))}:{f.get('line_start', 0)}"
+            hash_input = f"{f.get('current_value', f.get('message', ''))}:{f.get('resource_name', '')}:{f.get('line_start', 0)}"
             content_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
             baseline["findings"].append({
                 "rule_id": f["rule_id"],
