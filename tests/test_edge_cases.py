@@ -479,3 +479,78 @@ class TestTimeoutMismatch:
         config = ScannerConfig(skip_checks=[])
         findings = check_limit_003(resource, config)
         assert len(findings) == 0
+
+
+class TestTrustedSourcePrefixBypass:
+    """Verify trusted source checks cannot be bypassed by org name confusion."""
+
+    def test_evil_org_not_trusted(self):
+        """opendatahub-io-evil should NOT be trusted."""
+        config = ScannerConfig()
+        assert config.is_trusted_git_source("https://github.com/opendatahub-io-evil/malicious") is False
+
+    def test_legit_org_trusted(self):
+        config = ScannerConfig()
+        assert config.is_trusted_git_source("https://github.com/opendatahub-io/odh-pipeline") is True
+
+    def test_legit_org_with_git_suffix(self):
+        config = ScannerConfig()
+        assert config.is_trusted_git_source("https://github.com/opendatahub-io/repo.git") is True
+
+    def test_evil_suffix_variants(self):
+        config = ScannerConfig()
+        for evil in [
+            "https://github.com/red-hat-data-services-evil/bad",
+            "https://github.com/konflux-ci-evil/bad",
+            "https://github.com/redhat-appstudio-evil/bad",
+        ]:
+            assert config.is_trusted_git_source(evil) is False, f"{evil} should not be trusted"
+
+    def test_exact_org_url_match(self):
+        """Exact org URL (no repo) should still be trusted."""
+        config = ScannerConfig()
+        assert config.is_trusted_git_source("https://github.com/opendatahub-io/") is True
+
+    def test_registry_not_vulnerable(self):
+        """Verify is_trusted_registry does NOT have the same prefix confusion."""
+        config = ScannerConfig()
+        assert config.is_trusted_registry("quay.io/opendatahub-evil/img") is False
+        assert config.is_trusted_registry("quay.io/opendatahub/img") is True
+
+
+class TestBaselineMalformedEntries:
+    """Verify baseline loading handles malformed entries gracefully."""
+
+    def test_baseline_missing_rule_id(self, tmp_path):
+        """Baseline entries without rule_id should be skipped, not crash."""
+        import json
+        from tekton_guard.cli import main
+
+        # First generate a valid baseline
+        baseline_file = str(tmp_path / "baseline.json")
+        main([str(FIXTURES / "pipelinerun-mutable.yaml"), "--format", "text",
+              "--update-baseline", baseline_file])
+
+        # Corrupt it by removing rule_id from first entry
+        data = json.loads(Path(baseline_file).read_text())
+        if data["findings"]:
+            del data["findings"][0]["rule_id"]
+        Path(baseline_file).write_text(json.dumps(data))
+
+        # Should not crash
+        code = main([str(FIXTURES / "pipelinerun-mutable.yaml"), "--format", "text",
+                     "--baseline", baseline_file])
+        assert isinstance(code, int)
+
+    def test_baseline_non_dict_entry(self, tmp_path):
+        """Baseline with non-dict entries should be skipped."""
+        import json
+        from tekton_guard.cli import main
+
+        baseline = {"version": "1.0", "findings": ["not-a-dict", 42, None]}
+        baseline_file = str(tmp_path / "baseline.json")
+        Path(baseline_file).write_text(json.dumps(baseline))
+
+        code = main([str(FIXTURES / "pipelinerun-mutable.yaml"), "--format", "text",
+                     "--baseline", baseline_file])
+        assert isinstance(code, int)

@@ -76,8 +76,8 @@ def format_sarif(findings: list[dict[str, Any]], target: str) -> str:
                 "physicalLocation": {
                     "artifactLocation": {"uri": f["file"]},
                     "region": {
-                        "startLine": f.get("line_start", 1),
-                        "endLine": f.get("line_end", f.get("line_start", 1)),
+                        "startLine": max(f.get("line_start", 1), 1),
+                        "endLine": max(f.get("line_end", f.get("line_start", 1)), 1),
                     },
                 },
             }],

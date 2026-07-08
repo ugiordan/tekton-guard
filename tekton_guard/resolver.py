@@ -16,8 +16,10 @@ _cache: dict[str, list[TektonResource]] = {}
 
 def _git_url_to_raw_url(url: str, revision: str, path: str) -> str | None:
     """Convert a git clone URL to a raw file URL for GitHub repos."""
+    from urllib.parse import urlparse
     url = url.rstrip("/").removesuffix(".git")
-    if "github.com" not in url:
+    parsed = urlparse(url)
+    if parsed.hostname != "github.com":
         return None
     return f"{url}/raw/{revision}/{path}"
 

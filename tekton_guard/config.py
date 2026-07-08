@@ -57,8 +57,10 @@ class ScannerConfig:
             return False
         normalized = url.rstrip("/").removesuffix(".git")
         for trusted in self.trusted_git_sources:
-            prefix = trusted.rstrip("/")
-            if normalized.startswith(prefix):
+            # Ensure prefix ends with / to prevent org name confusion
+            # (e.g., opendatahub-io-evil matching opendatahub-io)
+            prefix = trusted if trusted.endswith("/") else trusted + "/"
+            if normalized.startswith(prefix) or normalized == prefix.rstrip("/"):
                 return True
         return False
 
