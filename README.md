@@ -1,5 +1,9 @@
 # tekton-guard
 
+<p align="center">
+  <img src="site/docs/images/logo.svg" alt="tekton-guard" width="120">
+</p>
+
 Security scanner for Tekton pipeline definitions. Catches supply chain risks that pattern-matching tools (semgrep, kube-linter) can't detect: transitive reference chains, resolver trust classification, cross-resource data flow analysis, trigger injection, pipeline logic manipulation.
 
 No dedicated Tekton security scanner existed before this tool.

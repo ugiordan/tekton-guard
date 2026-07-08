@@ -10,7 +10,7 @@ theme:
   language: en
   icon:
     repo: fontawesome/brands/github
-    logo: material/shield-lock
+  logo: images/logo.svg
   font:
     text: Red Hat Text
     code: Red Hat Mono
