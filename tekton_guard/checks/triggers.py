@@ -89,8 +89,7 @@ def check_trig_003(resource: TektonResource, config: ScannerConfig) -> list[dict
     """TKN-TRIG-003: Conditional skip of security tasks."""
     if resource.kind != "Pipeline":
         return []
-    security_patterns = ["scan", "sign", "verify", "attest", "cosign",
-                         "enterprise-contract", "sast", "clair", "clamav"]
+    security_patterns = config.security_task_patterns
     findings = []
     raw_tasks = resource.raw.get("spec", {}).get("tasks", [])
     raw_finally = resource.raw.get("spec", {}).get("finally", [])

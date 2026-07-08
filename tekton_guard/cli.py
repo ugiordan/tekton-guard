@@ -24,7 +24,7 @@ def _create_fix_pr(total_fixed: int, total_skipped: int) -> None:
 
     try:
         existing = subprocess.run(
-            ["gh", "pr", "list", "--head", "tekton-guard/", "--json", "number"],
+            ["gh", "pr", "list", "--head", "tekton-guard/auto-pin", "--json", "number"],
             capture_output=True, text=True, timeout=15,
         )
         if existing.returncode == 0 and existing.stdout.strip() not in ("", "[]"):

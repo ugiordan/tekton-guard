@@ -167,7 +167,8 @@ def check_chain_006(resource: TektonResource, config: ScannerConfig) -> list[dic
     findings = []
     chains_result_names = {"IMAGE_URL", "IMAGE_DIGEST", "CHAINS-GIT_URL", "CHAINS-GIT_COMMIT"}
     raw_tasks = resource.raw.get("spec", {}).get("tasks", [])
-    for task_data in (raw_tasks or []):
+    raw_finally = resource.raw.get("spec", {}).get("finally", [])
+    for task_data in (raw_tasks or []) + (raw_finally or []):
         name = str(task_data.get("name", ""))
         on_error = str(task_data.get("onError", "")).lower()
         if on_error != "continue":

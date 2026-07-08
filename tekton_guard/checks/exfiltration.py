@@ -17,7 +17,7 @@ _DEV_TCP_RE = re.compile(r"/dev/tcp/")
 @register_check
 def check_exfil_001(resource: TektonResource, config: ScannerConfig) -> list[dict]:
     """TKN-EXFIL-001: Task with secret access and network-capable scripts."""
-    if resource.kind not in ("Task", "StepAction"):
+    if resource.kind not in ("Task", "StepAction", "PipelineRun", "TaskRun"):
         return []
 
     has_secret = False

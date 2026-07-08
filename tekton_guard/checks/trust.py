@@ -178,11 +178,14 @@ def check_trust_006(resources: list, config: ScannerConfig) -> list[dict]:
             # Check if any VP pattern covers this bundle
             covered = False
             for pattern in vp_patterns:
+                # Limit pattern length to prevent ReDoS from crafted VerificationPolicies
+                if len(pattern) > 500:
+                    continue
                 try:
                     if _re.search(pattern, bundle):
                         covered = True
                         break
-                except _re.error:
+                except (_re.error, RecursionError):
                     pass
             if not covered:
                 findings.append(_finding(
