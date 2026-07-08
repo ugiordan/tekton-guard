@@ -49,8 +49,11 @@ def check_exfil_001(resource: TektonResource, config: ScannerConfig) -> list[dic
     # Check inline taskSpec volumes for Pipeline/PipelineRun
     if not has_secret:
         if resource.kind in ("Pipeline", "PipelineRun"):
+            # For PipelineRun, tasks may be under spec.pipelineSpec.tasks
+            spec = resource.raw.get("spec", {})
+            pipeline_spec = spec.get("pipelineSpec", spec)
             for task_list_key in ("tasks", "finally"):
-                for task_data in resource.raw.get("spec", {}).get(task_list_key, []) or []:
+                for task_data in pipeline_spec.get(task_list_key, []) or []:
                     for vol in task_data.get("taskSpec", {}).get("volumes", []) or []:
                         if isinstance(vol, dict) and vol.get("secret"):
                             has_secret = True

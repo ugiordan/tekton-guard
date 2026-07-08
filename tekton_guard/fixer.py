@@ -156,6 +156,12 @@ def _resolve_image_digest(image: str) -> str | None:
             if not realm_match:
                 return None
             token_url = realm_match.group(1)
+            # Validate realm URL host against SSRF
+            from urllib.parse import urlparse
+            realm_host = urlparse(token_url).hostname or ""
+            if not _is_safe_host(realm_host):
+                logger.debug("Rejecting private/loopback realm host: %s", realm_host)
+                return None
             token_params = []
             if service_match:
                 token_params.append(f"service={service_match.group(1)}")
