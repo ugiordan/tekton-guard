@@ -2,15 +2,27 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import logging
 import os
 import re
+import socket
 import tempfile
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+def _is_safe_host(hostname: str) -> bool:
+    """Check that a registry hostname does not resolve to a private/loopback IP."""
+    try:
+        host = hostname.split(":")[0]
+        ip = ipaddress.ip_address(socket.gethostbyname(host))
+        return ip.is_global
+    except (ValueError, socket.gaierror, OSError):
+        return True  # hostname that can't resolve, allow (will fail on connect anyway)
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
@@ -102,6 +114,10 @@ def _resolve_image_digest(image: str) -> str | None:
     # Normalize Docker Hub hostname (exact match, not substring)
     if registry in ("docker.io", "index.docker.io"):
         registry = "registry-1.docker.io"
+
+    if not _is_safe_host(registry):
+        logger.debug("Rejecting private/loopback registry host: %s", registry)
+        return None
 
     manifest_url = f"https://{registry}/v2/{repository}/manifests/{tag}"
 

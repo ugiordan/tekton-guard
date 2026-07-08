@@ -80,9 +80,11 @@ def _fetch_via_api(url: str, revision: str, path: str) -> list[TektonResource]:
     """Fetch a remote Tekton file via GitHub raw content URL (no git clone needed)."""
     import urllib.request
 
-    # Validate path has no traversal
-    if ".." in path:
-        logger.debug("Rejecting path with traversal: %s", path)
+    # Validate path has no traversal (double-decode to catch %2e%2e etc.)
+    from urllib.parse import unquote
+    decoded = unquote(unquote(path))
+    if ".." in decoded or decoded.startswith("/"):
+        logger.debug("Rejecting unsafe path: %s", path)
         return []
 
     cache_key = f"{url}@{revision}:{path}"

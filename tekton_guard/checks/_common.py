@@ -84,6 +84,10 @@ def _finding(
         "docs_url": docs_url,
     }
     if extra:
+        _RESERVED = {"rule_id", "severity", "title", "file", "line_start", "line_end",
+                     "message", "resource_kind", "resource_name", "cwe", "remediation", "docs_url"}
+        for key in _RESERVED:
+            extra.pop(key, None)
         result.update(extra)
     return result
 

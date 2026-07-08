@@ -58,7 +58,11 @@ def check_trig_002(resource: TektonResource, config: ScannerConfig) -> list[dict
     on_comment = resource.annotations.get("pipelinesascode.tekton.dev/on-comment", "")
 
     if cel_expr:
-        is_push = 'event == "push"' in cel_expr or "event == 'push'" in cel_expr
+        is_push = (
+            'event == "push"' in cel_expr
+            or "event == 'push'" in cel_expr
+            or bool(re.search(r'["\']push["\']\s*==\s*\bevent\b', cel_expr))
+        )
         has_branch_filter = "target_branch" in cel_expr
         if is_push and not has_branch_filter:
             findings.append(_finding(

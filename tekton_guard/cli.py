@@ -22,6 +22,12 @@ def _create_fix_pr(total_fixed: int, total_skipped: int) -> None:
     short_hash = hashlib.sha256(datetime.now(timezone.utc).isoformat().encode()).hexdigest()[:8]
     branch = f"tekton-guard/auto-pin-{short_hash}"
 
+    # Save current branch to restore on failure
+    current_branch = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        capture_output=True, text=True, timeout=5,
+    ).stdout.strip()
+
     try:
         existing = subprocess.run(
             ["gh", "pr", "list", "--json", "number,headRefName", "--state", "open"],
@@ -52,6 +58,10 @@ def _create_fix_pr(total_fixed: int, total_skipped: int) -> None:
         print("Error: gh CLI not found. Install it to use --create-pr.", file=sys.stderr)
     except subprocess.CalledProcessError as e:
         print(f"Error creating PR: {e}", file=sys.stderr)
+    finally:
+        # Restore original branch
+        if current_branch:
+            subprocess.run(["git", "checkout", current_branch], capture_output=True, timeout=10)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -343,7 +353,7 @@ def main(argv: list[str] | None = None) -> int:
             original_count = len(findings)
             findings = [f for f in findings if (
                 f["rule_id"], f["file"],
-                hashlib.sha256(f"{f.get('current_value', f.get('message', ''))}:{f.get('resource_name', '')}:{f.get('line_start', 0)}".encode()).hexdigest()[:16]
+                hashlib.sha256(f"{f.get('rule_id', '')}:{f.get('resource_name', '')}:{f.get('current_value', f.get('message', ''))}".encode()).hexdigest()[:16]
             ) not in baseline_keys]
             suppressed = original_count - len(findings)
             if suppressed:
@@ -358,7 +368,7 @@ def main(argv: list[str] | None = None) -> int:
             "findings": []
         }
         for f in findings:
-            hash_input = f"{f.get('current_value', f.get('message', ''))}:{f.get('resource_name', '')}:{f.get('line_start', 0)}"
+            hash_input = f"{f.get('rule_id', '')}:{f.get('resource_name', '')}:{f.get('current_value', f.get('message', ''))}"
             content_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
             baseline["findings"].append({
                 "rule_id": f["rule_id"],
