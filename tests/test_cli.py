@@ -47,6 +47,19 @@ def test_update_baseline_creates_file(tmp_path):
     assert all(f["rule_id"] for f in baseline["findings"])
 
 
+def test_exclude_paths():
+    # pipelinerun-mutable.yaml normally produces findings (exit 1),
+    # but --exclude-paths skips all resources from that fixture path
+    code = main([FIXTURES + "/pipelinerun-mutable.yaml", "--exclude-paths", "*/fixtures/*", "--format", "text"])
+    assert code == 0  # all resources excluded, no findings
+
+
+def test_exclude_paths_no_match():
+    # Pattern that doesn't match anything should leave findings intact
+    code = main([FIXTURES + "/pipelinerun-mutable.yaml", "--exclude-paths", "*/nonexistent/*", "--format", "text"])
+    assert code == 1  # findings remain
+
+
 def test_baseline_suppresses_findings(tmp_path):
     import json
     # First generate baseline

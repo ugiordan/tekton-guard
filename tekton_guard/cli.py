@@ -161,6 +161,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Directory containing VerificationPolicy YAML files (for TKN-TRUST-006).",
     )
     parser.add_argument(
+        "--exclude-paths",
+        nargs="*",
+        default=None,
+        help="Glob patterns to exclude from scanning (e.g., '*/tests/*' '*/samples/*')",
+    )
+    parser.add_argument(
         "--explain",
         default=None,
         metavar="RULE_ID",
@@ -211,6 +217,16 @@ def main(argv: list[str] | None = None) -> int:
             for p in sorted(policy_path.glob("*.yaml")) + sorted(policy_path.glob("*.yml")):
                 resources.extend(parse_file(p))
             print(f"Loaded policy files from {args.policy_dir}", file=sys.stderr)
+
+    if args.exclude_paths:
+        import fnmatch
+        original = len(resources)
+        resources = [r for r in resources if not any(
+            fnmatch.fnmatch(r.file_path, pat) for pat in args.exclude_paths
+        )]
+        excluded = original - len(resources)
+        if excluded:
+            print(f"Excluded {excluded} resource(s) matching {args.exclude_paths}", file=sys.stderr)
 
     if args.diff_base:
         import subprocess
