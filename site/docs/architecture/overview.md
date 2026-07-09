@@ -8,11 +8,11 @@ tekton_guard/
 ├── cli.py              # CLI entry point, argparse
 ├── parser.py           # YAML parser with ruamel.yaml, PaC template handling
 ├── config.py           # Trust lists, check settings
-├── checks/             # Security checks (48 checks across 12 categories)
+├── checks/             # Security checks (50 checks across 12 categories)
 │   ├── __init__.py     # Auto-discovery registry, run_checks()
 │   ├── _common.py      # @register_check decorator, shared helpers
 │   ├── pinning.py      # TKN-PIN-001..005
-│   ├── trust.py        # TKN-TRUST-001..006
+│   ├── trust.py        # TKN-TRUST-001..007
 │   ├── service_account.py  # TKN-SA-001..002
 │   ├── workspace.py    # TKN-WS-001..002
 │   ├── result_injection.py # TKN-RES-001..003
@@ -20,7 +20,7 @@ tekton_guard/
 │   ├── volumes.py      # TKN-VOL-001..002
 │   ├── triggers.py     # TKN-TRIG-001..009
 │   ├── exfiltration.py # TKN-EXFIL-001..002
-│   ├── limits.py       # TKN-LIMIT-002
+│   ├── limits.py       # TKN-LIMIT-001..003
 │   ├── chains.py       # TKN-CHAIN-001..006
 │   └── logic.py        # TKN-LOGIC-001..007
 ├── formatter.py        # JSON, SARIF, text output
@@ -45,10 +45,10 @@ graph TB
         LOAD --> EXTRACT
     end
     
-    subgraph Checks["48 Security Checks"]
+    subgraph Checks["50 Security Checks"]
         direction LR
         PIN["Pinning<br/>5 checks"]
-        TRUST["Trust<br/>6 checks"]
+        TRUST["Trust<br/>7 checks"]
         SEC["Security<br/>2 checks"]
         VOL["Volumes<br/>2 checks"]
         TRIG["Triggers<br/>9 checks"]
@@ -56,7 +56,7 @@ graph TB
         WS["Workspace<br/>2 checks"]
         RES["Injection<br/>3 checks"]
         EXFIL["Exfiltration<br/>2 checks"]
-        LIMIT["Limits<br/>1 check"]
+        LIMIT["Limits<br/>3 checks"]
         CHAIN["Chains<br/>6 checks"]
         LOGIC["Logic<br/>7 checks"]
     end

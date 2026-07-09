@@ -1,6 +1,6 @@
 # Detection Rules
 
-tekton-guard includes 48 security checks across 12 categories. Each check has a unique rule ID, severity level, and CWE mapping.
+tekton-guard includes 50 security checks across 12 categories. Each check has a unique rule ID, severity level, and CWE mapping.
 
 ## Check Categories Overview
 
@@ -29,6 +29,7 @@ graph TD
         TRUST003["TKN-TRUST-003<br/>Cluster Task"]
         TRUST005["TKN-TRUST-005<br/>Shared Namespace"]
         TRUST006["TKN-TRUST-006<br/>No VP Coverage"]
+        TRUST007["TKN-TRUST-007<br/>Unknown Resolver"]
         SA002["TKN-SA-002<br/>Missing SA"]
         WS002["TKN-WS-002<br/>Shared Workspace"]
         RES001["TKN-RES-001<br/>Script Injection"]
@@ -50,6 +51,7 @@ graph TD
         CHAIN001["TKN-CHAIN-001<br/>Chains Readiness"]
         CHAIN005["TKN-CHAIN-005<br/>No SBOM"]
         LIMIT002["TKN-LIMIT-002<br/>Timeout"]
+        LIMIT003["TKN-LIMIT-003<br/>Timeout Mismatch"]
         EXFIL002["TKN-EXFIL-002<br/>Net Tools"]
         TRIG009["TKN-TRIG-009<br/>No TLS"]
         LOGIC002["TKN-LOGIC-002<br/>Overridable Param"]
@@ -168,6 +170,14 @@ graph TD
 - **Detect**: `taskRef.resolver: bundles` where the bundle image does not match any `resourcePattern` in scanned VerificationPolicy resources
 - **Risk**: Bundle content is not signature-verified before execution.
 - **Fix**: Create a VerificationPolicy with a `resourcePattern` covering this bundle's registry.
+
+### TKN-TRUST-007: Unknown resolver type
+- **Severity**: MEDIUM
+- **CWE**: CWE-829 (Inclusion of Functionality from Untrusted Control Sphere)
+- **Applies to**: PipelineRun, Pipeline
+- **Detect**: `pipelineRef` or `taskRef` using a resolver type not in the known set (`git`, `bundles`, `hub`, `cluster`, `http`)
+- **Risk**: Custom resolvers can execute arbitrary code and their behavior is unverifiable by static analysis.
+- **Fix**: Use a known resolver type (git, bundles, hub, cluster, http) or document the custom resolver's security properties.
 
 ---
 
@@ -419,6 +429,14 @@ graph TD
 - **Detect**: `spec.timeouts.pipeline` exceeding 4 hours, or `spec.timeouts.tasks` exceeding 2 hours
 - **Risk**: Long-running pipelines increase the attack window for compromised tasks.
 - **Fix**: Reduce pipeline timeout to 4 hours or less, task timeout to 2 hours or less.
+
+### TKN-LIMIT-003: Task timeout exceeds pipeline timeout
+- **Severity**: LOW
+- **CWE**: CWE-400 (Uncontrolled Resource Consumption)
+- **Applies to**: PipelineRun
+- **Detect**: `spec.timeouts.tasks` value exceeds `spec.timeouts.pipeline` value
+- **Risk**: Tasks may be killed mid-execution when they hit the pipeline timeout, potentially leaving partial artifacts.
+- **Fix**: Ensure pipeline timeout >= task timeout.
 
 ---
 

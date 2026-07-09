@@ -25,6 +25,7 @@ tekton-guard [OPTIONS] TARGET
 | **`--min-severity`** | Minimum severity to report: `INFO`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` | any |
 | **`--fail-on`** | Exit 1 only if findings at or above this severity | any finding |
 | **`--exit-zero`** | Always exit 0 regardless of findings (informational runs) | false |
+| **`--exclude-paths`** | Glob patterns to exclude from scanning (e.g., `*/tests/*` `*/samples/*`) | none |
 
 ### Auto-Fix
 
@@ -32,6 +33,7 @@ tekton-guard [OPTIONS] TARGET
 |------|-------------|---------|
 | **`--fix`** | Apply safe fixes (SHA pinning, readOnly). Requires `GITHUB_TOKEN` for git ref resolution. | false |
 | **`--fix-dry-run`** | Preview fixes without applying them | false |
+| **`--create-pr`** | With `--fix`, create a PR with the auto-fix changes. Requires `gh` CLI. | false |
 
 !!! warning "Destructive operation"
     The `--fix` flag modifies YAML files in place. Always run `--fix-dry-run` first to preview changes. Back up your `.tekton/` directory or ensure files are committed before applying fixes.
@@ -63,6 +65,7 @@ tekton-guard [OPTIONS] TARGET
 | Flag | Description | Default |
 |------|-------------|---------|
 | **`--verify-pins`** | Check if pinned SHAs are stale (no longer match branch HEAD). Requires `GITHUB_TOKEN`. | false |
+| **`--policy-dir`** | Directory containing VerificationPolicy YAML files (for TKN-TRUST-006 correlation check). | none |
 
 `--verify-pins` iterates all pinned git references and checks whether the SHA still matches the HEAD of the referenced branch via the GitHub API. Useful for detecting refs that are pinned but lagging behind upstream.
 
@@ -71,8 +74,15 @@ tekton-guard [OPTIONS] TARGET
 | Flag | Description | Default |
 |------|-------------|---------|
 | **`--graph`** | Generate dependency graph JSON to this file path | none |
+| **`--blast-radius`** | Show which repos are affected by a vulnerability in the given `REPO_ID` (e.g., `opendatahub-io/odh-konflux-central`). Uses `--graph` data if provided, otherwise builds graph on the fly. | none |
 
 The graph output shows repos as nodes and git resolver references as edges, useful for visualizing blast radius when a shared pipeline is compromised.
+
+### Introspection
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| **`--explain`** | Show detailed information about a specific check rule (e.g., `--explain TKN-PIN-001`). Prints the rule description and documentation link. | none |
 
 ## Exit Codes
 
