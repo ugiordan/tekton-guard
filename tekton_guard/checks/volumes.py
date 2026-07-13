@@ -1,10 +1,10 @@
-"""Volume mount checks (TKN-VOL-001..002)."""
+"""Volume mount checks (TKN-VOL-001..003)."""
 
 from __future__ import annotations
 
 from tekton_guard.config import ScannerConfig
 from tekton_guard.parser import TektonResource, _to_plain
-from tekton_guard.checks._common import _finding, register_check
+from tekton_guard.checks._common import _finding, collect_all_containers, register_check
 
 _RUNTIME_SOCKET_PATHS = {
     "/var/run/docker.sock",
@@ -80,5 +80,36 @@ def check_vol_002(resource: TektonResource, config: ScannerConfig) -> list[dict]
                 cwe="CWE-284",
                 remediation="Remove the runtime socket mount. Use rootless build tools (buildah, kaniko) that don't require Docker socket access.",
                 extra={"volume_name": vol.get("name", ""), "host_path": path},
+            ))
+    return findings
+
+
+@register_check
+def check_vol_003(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-VOL-003: Sidecar with write access to results directory."""
+    findings: list[dict] = []
+    for ci in collect_all_containers(resource):
+        # FP guard: only flag sidecars, never steps (steps legitimately write results)
+        if ci.container_type != "sidecar":
+            continue
+        for vm in ci.container.volume_mounts:
+            mount_path = str(vm.get("mountPath", ""))
+            if "/tekton/results" not in mount_path:
+                continue
+            # Check if it's read-only (less risky, but still suspicious for a sidecar)
+            read_only = vm.get("readOnly", False)
+            if read_only:
+                continue  # Read-only mount on sidecar is lower risk, skip
+            findings.append(_finding(
+                "TKN-VOL-003", "MEDIUM",
+                "Sidecar with write access to results directory",
+                resource, ci.container.image_line,
+                f"Sidecar '{ci.container.name}' in {ci.context} mounts "
+                f"'{mount_path}' with write access. Sidecars can run concurrently "
+                f"with steps and could tamper with task results, poisoning downstream "
+                f"pipeline decisions or Chains attestation data.",
+                cwe="CWE-345",
+                remediation="Remove the /tekton/results volumeMount from the sidecar. If read access is needed, mount as readOnly.",
+                extra={"sidecar_name": ci.container.name, "mount_path": mount_path},
             ))
     return findings

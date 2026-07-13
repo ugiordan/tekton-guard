@@ -1,4 +1,4 @@
-"""Trust checks (TKN-TRUST-001..007)."""
+"""Trust checks (TKN-TRUST-001..008)."""
 
 from __future__ import annotations
 
@@ -237,5 +237,45 @@ def check_trust_007(resource: TektonResource, config: ScannerConfig) -> list[dic
                     remediation="Use a known resolver type or document the custom resolver.",
                     extra={"resolver_type": ref.resolver_type, "task_name": pt.name},
                 ))
+
+    return findings
+
+
+@register_check
+def check_trust_008(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-TRUST-008: Git resolver API mode token leak (CVE-2026-40161)."""
+    findings: list[dict] = []
+
+    def _check_api_mode_leak(ref, context: str) -> None:
+        if not ref or ref.resolver_type != "git":
+            return
+        server_url = ref.params.get("serverURL", "")
+        if not server_url:
+            return
+        # If explicit token param is present, skip (token is intentionally provided)
+        if ref.params.get("token", ""):
+            return
+        # FP guard: skip if serverURL is a trusted git source
+        if config.is_trusted_git_source(server_url):
+            return
+        findings.append(_finding(
+            "TKN-TRUST-008", "HIGH",
+            "Git resolver API mode token leak (CVE-2026-40161)",
+            resource, ref.line,
+            f"{context} uses git resolver in API mode (serverURL: '{server_url}') "
+            f"without an explicit token param. The git resolver may send the "
+            f"cluster-configured default token to an untrusted server, leaking "
+            f"credentials.",
+            cwe="CWE-200",
+            remediation="Either add an explicit token param (from a Secret) or add the serverURL to trusted_git_sources.",
+            extra={"serverURL": server_url},
+        ))
+
+    if resource.pipeline_ref:
+        _check_api_mode_leak(resource.pipeline_ref, f"PipelineRun '{resource.name}' pipelineRef")
+
+    for pt in resource.pipeline_tasks + resource.finally_tasks:
+        if pt.task_ref and pt.task_ref.resolver:
+            _check_api_mode_leak(pt.task_ref.resolver, f"Pipeline task '{pt.name}'")
 
     return findings

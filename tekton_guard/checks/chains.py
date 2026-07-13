@@ -1,4 +1,4 @@
-"""Chains readiness checks (TKN-CHAIN-001..006)."""
+"""Chains readiness checks (TKN-CHAIN-001..007)."""
 
 from __future__ import annotations
 
@@ -208,3 +208,38 @@ def check_chain_006(resource: TektonResource, config: ScannerConfig) -> list[dic
                     extra={"task_name": name},
                 ))
     return findings
+
+
+@register_check
+def check_chain_007(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-CHAIN-007: Build pipeline without provenance signing."""
+    if resource.kind != "PipelineRun":
+        return []
+    pipeline_type = resource.labels.get("pipelines.appstudio.openshift.io/type", "")
+    if pipeline_type != "build":
+        return []
+    # FP guard: skip Konflux/AppStudio pipelines (Chains configured at cluster level)
+    is_konflux = (
+        "appstudio.openshift.io/application" in resource.labels
+        or "appstudio.openshift.io/component" in resource.labels
+    )
+    if is_konflux:
+        return []
+    # FP guard: skip if ANY chains.tekton.dev annotation exists
+    # (CHAIN-001 handles the narrower case of missing type hints)
+    has_any_chains_annotation = any(
+        "chains.tekton.dev" in k for k in resource.annotations
+    )
+    if has_any_chains_annotation:
+        return []
+    return [_finding(
+        "TKN-CHAIN-007", "MEDIUM",
+        "Build pipeline without provenance signing",
+        resource, resource.line_offset,
+        f"PipelineRun '{resource.name}' is labeled as a build pipeline but has "
+        f"no chains.tekton.dev annotations for transparency upload or signing. "
+        f"Build provenance will not be signed or published to a transparency log, "
+        f"weakening SLSA compliance.",
+        cwe="CWE-345",
+        remediation="Add 'chains.tekton.dev/transparency-upload: true' annotation and ensure Tekton Chains is configured for signing.",
+    )]

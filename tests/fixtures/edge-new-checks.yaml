@@ -1,0 +1,497 @@
+# Fixture for 10 new checks: SEC-003..006, TRUST-008, CHAIN-007, RES-004, LOGIC-008, WS-003, VOL-003
+---
+# SEC-003 positive: pathInRepo with traversal
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: path-traversal-run
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    - name: pathInRepo
+      value: ../../etc/passwd
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# SEC-003 negative: pathInRepo without traversal
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: safe-path-run
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    - name: pathInRepo
+      value: pipeline/build.yaml
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# SEC-003 negative: filename containing '..' but not as path component (v2..3)
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: dotdot-in-filename-run
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    - name: pathInRepo
+      value: v2..3/build.yaml
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# SEC-004 positive: VolumeMount to /tekton/results
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: tekton-mount-task
+spec:
+  steps:
+  - name: sneaky-step
+    image: alpine:3.18
+    volumeMounts:
+    - name: results-vol
+      mountPath: /tekton/results/
+  - name: creds-step
+    image: alpine:3.18
+    volumeMounts:
+    - name: creds-vol
+      mountPath: /tekton/creds/
+---
+# SEC-004 negative: VolumeMount to /tekton/home (legitimate)
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: tekton-home-mount-task
+spec:
+  steps:
+  - name: git-step
+    image: alpine:3.18
+    volumeMounts:
+    - name: home-vol
+      mountPath: /tekton/home
+---
+# SEC-005 positive: resolver name > 30 chars
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: long-resolver-run
+spec:
+  pipelineRef:
+    resolver: this-is-an-extremely-long-resolver-name-that-exceeds-thirty-characters
+    params:
+    - name: url
+      value: https://example.com/tasks.git
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# SEC-005 negative: resolver name <= 30 chars
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: normal-resolver-run
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# SEC-006 positive: Step without runAsNonRoot
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: no-nonroot-task
+spec:
+  steps:
+  - name: build
+    image: golang:1.21
+    script: |
+      echo building
+---
+# SEC-006 negative: Step with runAsNonRoot
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: nonroot-task
+spec:
+  steps:
+  - name: build
+    image: golang:1.21
+    securityContext:
+      runAsNonRoot: true
+    script: |
+      echo building
+---
+# SEC-006 negative: pod-level stepTemplate with runAsNonRoot
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: pod-level-nonroot-task
+spec:
+  stepTemplate:
+    securityContext:
+      runAsNonRoot: true
+  steps:
+  - name: build
+    image: golang:1.21
+    script: |
+      echo building
+---
+# SEC-006 negative: runAsUser set to non-zero
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: nonzero-user-task
+spec:
+  steps:
+  - name: build
+    image: golang:1.21
+    securityContext:
+      runAsUser: 1000
+    script: |
+      echo building
+---
+# TRUST-008 positive: git resolver with serverURL but no token, untrusted
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: api-mode-leak-run
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    - name: serverURL
+      value: https://evil-git-server.example.com
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# TRUST-008 negative: git resolver with serverURL AND explicit token
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: api-mode-with-token-run
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    - name: serverURL
+      value: https://evil-git-server.example.com
+    - name: token
+      value: my-secret-token
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# TRUST-008 negative: git resolver with serverURL that's trusted
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: api-mode-trusted-run
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    - name: serverURL
+      value: https://github.com/opendatahub-io/api
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# CHAIN-007 positive: build pipeline without chains annotations
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: build-no-signing
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# CHAIN-007 negative: build pipeline WITH chains annotation
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: build-with-signing
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+  annotations:
+    chains.tekton.dev/transparency-upload: "true"
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# CHAIN-007 negative: Konflux pipeline (cluster-level chains)
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: konflux-build
+  labels:
+    pipelines.appstudio.openshift.io/type: build
+    appstudio.openshift.io/application: my-app
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  taskRunTemplate:
+    serviceAccountName: build-sa
+---
+# RES-004 + LOGIC-008 positive: Pipeline with untrusted task result consumed by trusted task
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: result-flow-pipeline
+spec:
+  tasks:
+  - name: untrusted-producer
+    taskRef:
+      resolver: hub
+      params:
+      - name: name
+        value: some-task
+  - name: trusted-consumer
+    runAfter: [untrusted-producer]
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    params:
+    - name: input-value
+      value: $(tasks.untrusted-producer.results.output)
+    when:
+    - input: $(tasks.untrusted-producer.results.status)
+      operator: in
+      values: ["success"]
+  - name: also-untrusted-consumer
+    taskRef:
+      resolver: hub
+      params:
+      - name: name
+        value: another-task
+    params:
+    - name: data
+      value: $(tasks.untrusted-producer.results.output)
+---
+# RES-004 negative: all trusted tasks
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: all-trusted-pipeline
+spec:
+  tasks:
+  - name: trusted-producer
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+  - name: trusted-consumer
+    runAfter: [trusted-producer]
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    params:
+    - name: input-value
+      value: $(tasks.trusted-producer.results.output)
+---
+# WS-003 positive: workspace shared by 5 tasks
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: wide-workspace-pipeline
+spec:
+  workspaces:
+  - name: mega-workspace
+  - name: small-workspace
+  tasks:
+  - name: task-1
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    workspaces:
+    - name: ws
+      workspace: mega-workspace
+  - name: task-2
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    workspaces:
+    - name: ws
+      workspace: mega-workspace
+  - name: task-3
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    workspaces:
+    - name: ws
+      workspace: mega-workspace
+  - name: task-4
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    workspaces:
+    - name: ws
+      workspace: mega-workspace
+  - name: task-5
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    workspaces:
+    - name: ws
+      workspace: mega-workspace
+    - name: other
+      workspace: small-workspace
+  - name: task-6
+    taskRef:
+      resolver: git
+      params:
+      - name: url
+        value: https://github.com/opendatahub-io/tasks.git
+      - name: revision
+        value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    workspaces:
+    - name: other
+      workspace: small-workspace
+---
+# VOL-003 positive: sidecar with writable /tekton/results mount
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: sidecar-results-task
+spec:
+  steps:
+  - name: build
+    image: golang:1.21
+    volumeMounts:
+    - name: results-vol
+      mountPath: /tekton/results
+  sidecars:
+  - name: evil-sidecar
+    image: alpine:3.18
+    volumeMounts:
+    - name: results-vol
+      mountPath: /tekton/results
+---
+# VOL-003 negative: sidecar with readOnly /tekton/results mount
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: sidecar-readonly-results-task
+spec:
+  steps:
+  - name: build
+    image: golang:1.21
+  sidecars:
+  - name: monitor-sidecar
+    image: alpine:3.18
+    volumeMounts:
+    - name: results-vol
+      mountPath: /tekton/results
+      readOnly: true
+---
+# VOL-003 negative: step (not sidecar) with /tekton/results mount (legitimate)
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: step-results-task
+spec:
+  steps:
+  - name: build
+    image: golang:1.21
+    volumeMounts:
+    - name: results-vol
+      mountPath: /tekton/results
+---
+# SEC-003 positive: URL-encoded traversal
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: encoded-traversal-run
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+    - name: url
+      value: https://github.com/opendatahub-io/tasks.git
+    - name: revision
+      value: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    - name: pathInRepo
+      value: path/%2e%2e/secret/key
+  taskRunTemplate:
+    serviceAccountName: build-sa

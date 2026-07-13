@@ -8,6 +8,8 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
+from tekton_guard import __version__
+
 
 def _category_from_rule(rule_id: str) -> str:
     prefix = rule_id.split("-")[1] if "-" in rule_id else ""
@@ -102,8 +104,8 @@ def format_sarif(findings: list[dict[str, Any]], target: str) -> str:
             "tool": {
                 "driver": {
                     "name": "tekton-guard",
-                    "version": "1.0.0",
-                    "informationUri": "https://github.com/opendatahub-io/tekton-guard",
+                    "version": __version__,
+                    "informationUri": "https://github.com/ugiordan/tekton-guard",
                     "rules": list(rules_seen.values()),
                 },
             },

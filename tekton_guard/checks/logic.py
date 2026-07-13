@@ -1,10 +1,14 @@
-"""Pipeline logic checks (TKN-LOGIC-001..007)."""
+"""Pipeline logic checks (TKN-LOGIC-001..008)."""
 
 from __future__ import annotations
+
+import re
 
 from tekton_guard.config import ScannerConfig
 from tekton_guard.parser import TektonResource
 from tekton_guard.checks._common import _finding, register_check
+
+_TASK_RESULT_IN_WHEN_RE = re.compile(r"\$\(tasks\.([^.]+)\.results\.[^)]+\)")
 
 
 @register_check
@@ -253,4 +257,57 @@ def check_logic_007(resource: TektonResource, config: ScannerConfig) -> list[dic
                 remediation="Remove retries from security tasks. Security checks should fail deterministically.",
                 extra={"task_name": name, "retries": int(retries)},
             ))
+    return findings
+
+
+@register_check
+def check_logic_008(resource: TektonResource, config: ScannerConfig) -> list[dict]:
+    """TKN-LOGIC-008: Untrusted task result in when expression."""
+    if resource.kind != "Pipeline":
+        return []
+
+    # Build set of untrusted task names
+    untrusted_tasks: set[str] = set()
+    all_tasks = resource.pipeline_tasks + resource.finally_tasks
+    for pt in all_tasks:
+        if not pt.task_ref or not pt.task_ref.resolver:
+            continue
+        ref = pt.task_ref.resolver
+        if ref.resolver_type == "hub":
+            untrusted_tasks.add(pt.name)
+        elif ref.resolver_type == "git" and not config.is_trusted_git_source(ref.url):
+            untrusted_tasks.add(pt.name)
+
+    if not untrusted_tasks:
+        return []
+
+    findings: list[dict] = []
+    raw_tasks = resource.raw.get("spec", {}).get("tasks", [])
+    raw_finally = resource.raw.get("spec", {}).get("finally", [])
+
+    for task_data in (raw_tasks or []) + (raw_finally or []):
+        task_name = str(task_data.get("name", ""))
+        when_list = task_data.get("when", [])
+        if not when_list:
+            continue
+        for when in when_list:
+            input_val = str(when.get("input", ""))
+            for match in _TASK_RESULT_IN_WHEN_RE.finditer(input_val):
+                producer_name = match.group(1)
+                # FP guard: only flag if the producing task is actually untrusted
+                if producer_name not in untrusted_tasks:
+                    continue
+                findings.append(_finding(
+                    "TKN-LOGIC-008", "MEDIUM",
+                    "Untrusted task result in when expression",
+                    resource, resource.line_offset,
+                    f"Pipeline task '{task_name}' uses a when expression referencing "
+                    f"result from untrusted task '{producer_name}': '{input_val}'. "
+                    f"An untrusted task can control whether downstream tasks execute "
+                    f"by manipulating its result values.",
+                    cwe="CWE-94",
+                    remediation="Use trusted task sources for tasks that produce results consumed in when expressions, or validate the result value.",
+                    extra={"task_name": task_name, "producer_task": producer_name,
+                           "when_input": input_val},
+                ))
     return findings

@@ -1,0 +1,74 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruamel.yaml pytest
+      - run: PYTHONPATH=. python -m pytest tests/ -v
+
+  pypi:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+  binaries:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-amd64
+          - os: macos-latest
+            target: darwin-arm64
+          - os: windows-latest
+            target: windows-amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyinstaller ruamel.yaml
+      - name: Build binary
+        run: |
+          pyinstaller --onefile --name tekton-guard-${{ matrix.target }} \
+            --hidden-import tekton_guard.checks.pinning \
+            --hidden-import tekton_guard.checks.trust \
+            --hidden-import tekton_guard.checks.triggers \
+            --hidden-import tekton_guard.checks.logic \
+            --hidden-import tekton_guard.checks.chains \
+            --hidden-import tekton_guard.checks.security \
+            --hidden-import tekton_guard.checks.exfiltration \
+            --hidden-import tekton_guard.checks.workspace \
+            --hidden-import tekton_guard.checks.volumes \
+            --hidden-import tekton_guard.checks.service_account \
+            --hidden-import tekton_guard.checks.result_injection \
+            --hidden-import tekton_guard.checks.limits \
+            tekton_guard/__main__.py
+        shell: bash
+      - name: Upload binary to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/tekton-guard-${{ matrix.target }}*
