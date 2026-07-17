@@ -1,10 +1,8 @@
-"""Check registry with importlib auto-discovery."""
+"""Check registry with explicit imports (PyInstaller-compatible)."""
 
 from __future__ import annotations
 
-import importlib
 import logging
-from pathlib import Path
 from typing import Any
 
 from tekton_guard.config import ScannerConfig
@@ -13,16 +11,21 @@ from tekton_guard.checks._common import SEVERITY_ORDER, get_all_checks
 
 logger = logging.getLogger(__name__)
 
-# Auto-import all check modules in this package (excludes __init__.py and _common.py)
-_pkg_dir = Path(__file__).parent
-for _mod_path in sorted(_pkg_dir.glob("*.py")):
-    _mod_name = _mod_path.stem
-    if _mod_name.startswith("_"):
-        continue
-    try:
-        importlib.import_module(f"tekton_guard.checks.{_mod_name}")
-    except Exception:
-        logger.error("Failed to import check module: %s", _mod_name, exc_info=True)
+# Explicit imports so PyInstaller bundles all check modules.
+# importlib.import_module + Path.glob doesn't work in frozen binaries
+# because the .py files don't exist on the filesystem.
+from tekton_guard.checks import chains  # noqa: F401
+from tekton_guard.checks import exfiltration  # noqa: F401
+from tekton_guard.checks import limits  # noqa: F401
+from tekton_guard.checks import logic  # noqa: F401
+from tekton_guard.checks import pinning  # noqa: F401
+from tekton_guard.checks import result_injection  # noqa: F401
+from tekton_guard.checks import security  # noqa: F401
+from tekton_guard.checks import service_account  # noqa: F401
+from tekton_guard.checks import triggers  # noqa: F401
+from tekton_guard.checks import trust  # noqa: F401
+from tekton_guard.checks import volumes  # noqa: F401
+from tekton_guard.checks import workspace  # noqa: F401
 
 _EXPECTED_MIN_CHECKS = 59
 
