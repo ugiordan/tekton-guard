@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 144" width="120" height="144">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield -->
+  <path d="M60 4 L116 32 L116 88 L60 140 L4 88 L4 32 Z" fill="url(#g)" stroke="#7f1d1d" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Inner border -->
+  <path d="M60 16 L106 40 L106 82 L60 128 L14 82 L14 40 Z" fill="none" stroke="white" stroke-width="1.5" opacity="0.3" stroke-linejoin="round"/>
+  <!-- Pipeline arrows: three chevrons -->
+  <path d="M36 62 L50 72 L36 82" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M52 62 L66 72 L52 82" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M68 62 L82 72 L68 82" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
