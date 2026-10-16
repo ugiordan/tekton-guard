@@ -8,21 +8,21 @@ tekton_guard/
 ├── cli.py              # CLI entry point, argparse
 ├── parser.py           # YAML parser with ruamel.yaml, PaC template handling
 ├── config.py           # Trust lists, check settings
-├── checks/             # Security checks (50 checks across 12 categories)
+├── checks/             # Security checks (60 checks across 12 categories)
 │   ├── __init__.py     # Auto-discovery registry, run_checks()
 │   ├── _common.py      # @register_check decorator, shared helpers
 │   ├── pinning.py      # TKN-PIN-001..005
-│   ├── trust.py        # TKN-TRUST-001..007
+│   ├── trust.py        # TKN-TRUST-001..008
 │   ├── service_account.py  # TKN-SA-001..002
-│   ├── workspace.py    # TKN-WS-001..002
-│   ├── result_injection.py # TKN-RES-001..003
-│   ├── security.py     # TKN-SEC-001..002
-│   ├── volumes.py      # TKN-VOL-001..002
+│   ├── workspace.py    # TKN-WS-001..003
+│   ├── result_injection.py # TKN-RES-001..004
+│   ├── security.py     # TKN-SEC-001..006
+│   ├── volumes.py      # TKN-VOL-001..003
 │   ├── triggers.py     # TKN-TRIG-001..009
 │   ├── exfiltration.py # TKN-EXFIL-001..002
 │   ├── limits.py       # TKN-LIMIT-001..003
-│   ├── chains.py       # TKN-CHAIN-001..006
-│   └── logic.py        # TKN-LOGIC-001..007
+│   ├── chains.py       # TKN-CHAIN-001..007
+│   └── logic.py        # TKN-LOGIC-001..008
 ├── formatter.py        # JSON, SARIF, text output
 ├── resolver.py         # Cross-repo git resolver (--resolve)
 ├── fixer.py            # Auto-fix engine (--fix, --fix-dry-run)
@@ -45,20 +45,20 @@ graph TB
         LOAD --> EXTRACT
     end
     
-    subgraph Checks["50 Security Checks"]
+    subgraph Checks["60 Security Checks"]
         direction LR
         PIN["Pinning<br/>5 checks"]
-        TRUST["Trust<br/>7 checks"]
-        SEC["Security<br/>2 checks"]
-        VOL["Volumes<br/>2 checks"]
+        TRUST["Trust<br/>8 checks"]
+        SEC["Security<br/>6 checks"]
+        VOL["Volumes<br/>3 checks"]
         TRIG["Triggers<br/>9 checks"]
         SA["SA<br/>2 checks"]
-        WS["Workspace<br/>2 checks"]
-        RES["Injection<br/>3 checks"]
+        WS["Workspace<br/>3 checks"]
+        RES["Injection<br/>4 checks"]
         EXFIL["Exfiltration<br/>2 checks"]
         LIMIT["Limits<br/>3 checks"]
-        CHAIN["Chains<br/>6 checks"]
-        LOGIC["Logic<br/>7 checks"]
+        CHAIN["Chains<br/>7 checks"]
+        LOGIC["Logic<br/>8 checks"]
     end
     
     subgraph Output

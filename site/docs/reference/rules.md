@@ -1,6 +1,6 @@
 # Detection Rules
 
-tekton-guard includes 50 security checks across 12 categories. Each check has a unique rule ID, severity level, and CWE mapping.
+tekton-guard includes 60 security checks across 12 categories. Each check has a unique rule ID, severity level, and CWE mapping.
 
 ## Check Categories Overview
 

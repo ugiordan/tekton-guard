@@ -58,18 +58,18 @@ Summary: 2 HIGH, 2 MEDIUM
 
 ## What It Detects
 
-50 checks across 12 categories:
+60 checks across 12 categories:
 
 - **Pinning** (5): mutable pipeline/task/StepAction refs, unpinned bundles, mutable step images
-- **Trust** (7): untrusted sources, HTTP resolver without digest, cluster resolver in shared namespace, unknown resolver types
+- **Trust** (8): untrusted sources, HTTP resolver without digest, cluster resolver in shared namespace, unknown resolver types, git resolver API mode token leak
 - **Trigger Security** (9): CEL injection (CRITICAL), TriggerTemplate injection, EventListener security, PaC Repository scope
-- **Pipeline Logic** (7): security task not in finally, onError:continue bypass, parameterized images, TOCTOU, retries on security tasks
-- **Chains Readiness** (6): VerificationPolicy regex, result poisoning, SBOM
-- **Result Injection** (3): script injection, args interpolation, PaC parameter taint
-- **Security Context** (2): privileged containers, root user
-- **Volume Mounts** (2): host path, container runtime socket
+- **Pipeline Logic** (8): security task not in finally, onError:continue bypass, parameterized images, TOCTOU, retries on security tasks, untrusted task result in when expression
+- **Chains Readiness** (7): VerificationPolicy regex, result poisoning, SBOM, build pipelines without provenance signing
+- **Result Injection** (4): script injection, args interpolation, PaC parameter taint, untrusted task results consumed without validation
+- **Security Context** (6): privileged containers, root user, git resolver pathInRepo traversal, VolumeMount into /tekton/ paths, oversized resolver names, steps without runAsNonRoot
+- **Volume Mounts** (3): host path, container runtime socket, sidecar write access to the results directory
 - **ServiceAccount** (2): default or missing SA
-- **Workspace** (2): secret without readOnly, shared with untrusted tasks
+- **Workspace** (3): secret without readOnly, shared with untrusted tasks, large workspace fan-out
 - **Exfiltration** (2): secret access + network tools
 - **Resource Limits** (3): missing resources, excessive timeouts, timeout mismatch
 

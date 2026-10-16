@@ -52,7 +52,7 @@ graph LR
 **Pipeline:**
 
 1. **Parser** loads Tekton YAML with ruamel.yaml, handles PaC template variables, multi-document files, and 10 CRD kinds
-2. **48 Security Checks** across 12 categories detect pinning, trust, injection, privilege, trigger, and logic issues
+2. **60 Security Checks** across 12 categories detect pinning, trust, injection, privilege, trigger, and logic issues
 3. **FP Suppression** filters PaC templates, Konflux patterns, and configurable safe lists
 4. **Optional**: `--resolve` follows git resolvers, `--fix` auto-pins mutable refs, `--graph` maps blast radius
 
@@ -135,22 +135,22 @@ tekton-guard is the only tool that performs **semantic security analysis** of Te
 
 ## What Gets Detected
 
-48 checks across 12 categories:
+60 checks across 12 categories:
 
 | Category | Checks | Examples |
 |----------|--------|---------|
 | **Pinning** | TKN-PIN-001..005 | Mutable pipeline/task/StepAction refs, unpinned bundles |
-| **Trust** | TKN-TRUST-001..006 | Untrusted sources, HTTP resolver without digest, shared namespace |
+| **Trust** | TKN-TRUST-001..008 | Untrusted sources, HTTP resolver without digest, shared namespace |
 | **ServiceAccount** | TKN-SA-001..002 | Default or missing SA |
-| **Workspace** | TKN-WS-001..002 | Secret without readOnly, shared with untrusted tasks |
-| **Result Injection** | TKN-RES-001..003 | Script injection, PaC parameter taint |
-| **Security Context** | TKN-SEC-001..002 | Privileged containers, root user |
-| **Volume Mounts** | TKN-VOL-001..002 | Host path, container runtime socket |
+| **Workspace** | TKN-WS-001..003 | Secret without readOnly, shared with untrusted tasks |
+| **Result Injection** | TKN-RES-001..004 | Script injection, PaC parameter taint |
+| **Security Context** | TKN-SEC-001..006 | Privileged containers, root user |
+| **Volume Mounts** | TKN-VOL-001..003 | Host path, container runtime socket |
 | **Trigger Security** | TKN-TRIG-001..009 | CEL injection, TriggerTemplate, EventListener, PaC Repository |
 | **Exfiltration** | TKN-EXFIL-001..002 | Secret access + network tools |
-| **Resource Limits** | TKN-LIMIT-001..002 | Missing resources, excessive timeouts |
-| **Chains Readiness** | TKN-CHAIN-001..006 | VerificationPolicy regex, result poisoning, SBOM |
-| **Pipeline Logic** | TKN-LOGIC-001..007 | Finally block, onError, parameterized images, TOCTOU |
+| **Resource Limits** | TKN-LIMIT-001..003 | Missing resources, excessive timeouts |
+| **Chains Readiness** | TKN-CHAIN-001..007 | VerificationPolicy regex, result poisoning, SBOM |
+| **Pipeline Logic** | TKN-LOGIC-001..008 | Finally block, onError, parameterized images, TOCTOU |
 
 See [Detection Rules](reference/rules.md) for the full reference.
 
